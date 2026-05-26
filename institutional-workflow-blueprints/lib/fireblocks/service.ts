@@ -141,35 +141,56 @@ export async function createTransaction(
   input: FireblocksCreateTransactionInput,
 ): Promise<FireblocksCreateTransactionResult> {
   const fireblocks = getFireblocksClient();
-  const response = await fireblocks.transactions.createTransaction({
-    transactionRequest: {
-      assetId: input.assetId,
-      amount: String(input.amount),
-      source: {
-        type: TransferPeerPathType.VaultAccount,
-        id: input.sourceVaultId,
-      },
-      destination: {
-        type: TransferPeerPathType.OneTimeAddress,
-        oneTimeAddress: {
-          address: input.destinationAddress,
+
+  try {
+    const response = await fireblocks.transactions.createTransaction({
+      transactionRequest: {
+        assetId: input.assetId,
+        amount: String(input.amount),
+        source: {
+          type: TransferPeerPathType.VaultAccount,
+          id: input.sourceVaultId,
         },
+        destination: {
+          type: TransferPeerPathType.OneTimeAddress,
+          oneTimeAddress: {
+            address: input.destinationAddress,
+          },
+        },
+        note: input.note ?? `Settlement ${input.externalTxId}`,
+        externalTxId: input.externalTxId,
       },
-      note: input.note ?? `Settlement ${input.externalTxId}`,
+      idempotencyKey: input.externalTxId,
+    });
+
+    const fireblocksTxId = response.data.id;
+    if (!fireblocksTxId) {
+      throw new Error("Fireblocks did not return a transaction ID.");
+    }
+
+    return {
+      fireblocksTxId,
+      status: response.data.status ?? "SUBMITTED",
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "object" && error !== null && "message" in error
+          ? String((error as { message?: unknown }).message)
+          : "Fireblocks transaction submission failed.";
+
+    console.error("[fireblocks/service] createTransaction failed", {
       externalTxId: input.externalTxId,
-    },
-    idempotencyKey: input.externalTxId,
-  });
+      assetId: input.assetId,
+      sourceVaultId: input.sourceVaultId,
+      amount: input.amount,
+      destinationAddress: input.destinationAddress,
+      message,
+    });
 
-  const fireblocksTxId = response.data.id;
-  if (!fireblocksTxId) {
-    throw new Error("Fireblocks did not return a transaction ID.");
+    throw new Error(message);
   }
-
-  return {
-    fireblocksTxId,
-    status: response.data.status ?? "SUBMITTED",
-  };
 }
 
 export async function getTransactionStatus(

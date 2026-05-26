@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
-import { createTransaction } from "@/lib/fireblocks/service";
-import { upsertTransactionRecord } from "@/lib/fireblocks/webhook-store";
+import { createTransaction, getVaultAccountById } from "@/lib/fireblocks/service";
+import {
+  classifyFireblocksApiError,
+  validateFireblocksTransaction,
+} from "@/lib/fireblocks/transaction-validation";
+import { getTransactionRecord, upsertTransactionRecord } from "@/lib/fireblocks/webhook-store";
 
 export const runtime = "nodejs";
 
@@ -41,13 +45,96 @@ export async function POST(request: Request) {
       {
         error:
           "externalTxId, assetId, sourceVaultId, destination, and note are required.",
+        category: "unknown",
       },
       { status: 400 },
     );
   }
 
   if (typeof amount !== "number" || amount <= 0) {
-    return NextResponse.json({ error: "amount must be a positive number." }, { status: 400 });
+    return NextResponse.json(
+      { error: "amount must be a positive number.", category: "invalid_amount" },
+      { status: 400 },
+    );
+  }
+
+  const existingRecord = await getTransactionRecord({ externalTxId });
+  if (existingRecord?.fireblocksTxId) {
+    return NextResponse.json(
+      {
+        error: `Settlement ${externalTxId} already has Fireblocks transaction ${existingRecord.fireblocksTxId}.`,
+        category: "duplicate_external_tx_id",
+      },
+      { status: 409 },
+    );
+  }
+
+  let validation;
+  try {
+    const vault = await getVaultAccountById(sourceVaultId);
+    validation = validateFireblocksTransaction({
+      transfer: {
+        id: externalTxId,
+        asset: assetId,
+        amount,
+        destination,
+        destinationLabel: destination,
+        reason: note,
+        sourceVault: vault.name,
+        status: "PENDING_APPROVAL",
+        riskLevel: "medium",
+        requiresApproval: true,
+        createdBy: "Treasury Manager",
+        createdByRole: "treasury_manager",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      treasury: {
+        integrationStatus: "connected",
+        message: "",
+        configured: true,
+        degradedMode: false,
+        vault,
+        assets: vault.assets,
+      },
+      externalTxIdAlreadyUsed: false,
+    });
+  } catch (error) {
+    const classified = classifyFireblocksApiError(error);
+    console.error("[fireblocks/transactions] vault validation failed", {
+      externalTxId,
+      sourceVaultId,
+      category: classified.category,
+      raw: classified.raw,
+    });
+    return NextResponse.json(
+      {
+        error: classified.message,
+        category: classified.category,
+        details: classified.raw,
+      },
+      { status: 400 },
+    );
+  }
+
+  if (!validation.ok) {
+    console.error("[fireblocks/transactions] payload validation failed", {
+      externalTxId,
+      assetId,
+      sourceVaultId,
+      amount,
+      destination,
+      category: validation.category,
+      message: validation.message,
+    });
+    return NextResponse.json(
+      {
+        error: validation.message,
+        category: validation.category,
+        debug: validation.debug,
+      },
+      { status: 400 },
+    );
   }
 
   try {
@@ -67,14 +154,25 @@ export async function POST(request: Request) {
       eventType: "TRANSACTION_SUBMITTED",
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, debug: validation.debug });
   } catch (error) {
+    const classified = classifyFireblocksApiError(error);
+    console.error("[fireblocks/transactions] submission failed", {
+      externalTxId,
+      assetId,
+      sourceVaultId,
+      amount,
+      destination,
+      category: classified.category,
+      raw: classified.raw,
+    });
+
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Fireblocks transaction submission failed.",
+        error: classified.message,
+        category: classified.category,
+        details: classified.raw,
+        debug: validation.debug,
       },
       { status: 502 },
     );

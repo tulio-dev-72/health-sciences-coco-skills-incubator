@@ -27,6 +27,7 @@ import { formatCurrency } from "@/lib/format";
 import { evaluateTransferPolicy, normalizeAddress } from "@/lib/policy";
 import { AUDIT_ACTIONS } from "@/lib/audit";
 import { getFireblocksStatusLabel } from "@/lib/fireblocks/lifecycle";
+import { dedupeTransfersById } from "@/lib/fireblocks/transaction-validation";
 import {
   isPrimaryBlueprint,
   PRIMARY_DEMO_TIMES,
@@ -189,7 +190,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case "HYDRATE_FROM_SERVER":
       return {
         ...state,
-        transfers: action.snapshot.transfers,
+        transfers: dedupeTransfersById(action.snapshot.transfers),
         auditLog: action.snapshot.auditLog,
         policy: action.snapshot.policy,
         lastTransferId: action.snapshot.lastTransferId,
@@ -290,13 +291,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
       );
 
       let nextTransfer: Transfer = transfer;
-      let transfers = [nextTransfer, ...state.transfers];
       let vaultBalances = updateVaultPending(
         state.vaultBalances,
         transfer.asset,
         transfer.amount,
       );
-
       let workflowStep: WorkflowStepId = "policy";
       let policySummary = evaluation.requiresApproval
         ? evaluation.policyTrigger
@@ -310,7 +309,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
           status: "PENDING_APPROVAL",
           updatedAt: now,
         };
-        transfers = [nextTransfer, ...state.transfers];
         auditLog = appendAudit(
           auditLog,
           {
@@ -336,11 +334,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
           reviewedByRole: "admin",
           updatedAt: new Date().toISOString(),
         };
-        transfers = [nextTransfer, ...state.transfers];
         vaultBalances = settleVault(vaultBalances, transfer.asset, transfer.amount);
         workflowStep = "audit";
         policySummary = "Transfer auto-approved below threshold and settled.";
       }
+
+      const transfers = dedupeTransfersById([nextTransfer, ...state.transfers]);
 
       return {
         ...state,

@@ -7,6 +7,10 @@ import type {
   FireblocksVaultBalance,
 } from "@/lib/fireblocks/types";
 import { OFFLINE_FIREBLOCKS_STATUS, OFFLINE_TREASURY_STATE } from "@/lib/fireblocks/types";
+import {
+  FireblocksSubmitError,
+  classifyFireblocksApiError,
+} from "@/lib/fireblocks/transaction-validation";
 
 export async function fetchFireblocksStatus(): Promise<FireblocksStatus> {
   try {
@@ -133,7 +137,14 @@ export async function submitFireblocksTransfer(input: {
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(body.error ?? body.message ?? "Fireblocks transaction submission failed.");
+    const classified = classifyFireblocksApiError(body.error ?? body.message ?? body);
+    throw new FireblocksSubmitError({
+      message: body.error ?? classified.message,
+      category: body.category ?? classified.category,
+      debug: body.debug,
+      raw: body.details ?? classified.raw,
+      apiResponse: body,
+    });
   }
 
   return body as { fireblocksTxId: string; status: string };

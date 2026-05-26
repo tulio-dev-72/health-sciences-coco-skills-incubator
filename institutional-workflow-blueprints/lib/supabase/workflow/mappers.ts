@@ -6,6 +6,7 @@ import type {
   TransferStatus,
   UserRole,
 } from "@/lib/types";
+import { dedupeTransfersById } from "@/lib/fireblocks/transaction-validation";
 import { normalizeWorkflowStep, type WorkflowStepId } from "@/lib/workflow";
 
 export type SettlementRow = {
@@ -142,7 +143,7 @@ export function buildWorkflowSnapshot(input: {
   auditLogs: AuditLogRow[];
   policy: PolicyRow | null;
 }): WorkflowSnapshot {
-  const transfers = input.settlements.map(mapSettlementRow);
+  const transfers = dedupeTransfersById(input.settlements.map(mapSettlementRow));
   const auditLog = input.auditLogs.map(mapAuditLogRow);
   const policy = input.policy ? mapPolicyRow(input.policy) : { approvalThreshold: 10000, whitelistedAddresses: [] };
   const lastTransfer = transfers[0] ?? null;
