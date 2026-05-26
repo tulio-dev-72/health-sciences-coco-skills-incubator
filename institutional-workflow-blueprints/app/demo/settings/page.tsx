@@ -11,13 +11,13 @@ import {
   SectionHeader,
   TextInput,
 } from "@/components/ui/primitives";
-import { AccessDeniedCard } from "@/components/demo/access-denied-card";
-import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
-import { FundTreasuryMainPanel } from "@/components/demo/fund-treasury-main-panel";
-import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
+import { AccessRestrictedPanel } from "@/components/demo/access-restricted-panel";
 import { FireblocksIntegrationPanel } from "@/components/demo/fireblocks-panel";
+import { FundTreasuryMainPanel } from "@/components/demo/fund-treasury-main-panel";
+import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
+import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
+import { getRouteAccessRestriction } from "@/lib/auth/access-restriction";
 import { canManagePolicy } from "@/lib/policy";
-import { getAccessDeniedMessage } from "@/lib/auth/permissions";
 import { truncateAddress } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 
@@ -53,9 +53,9 @@ export default function SettingsPage() {
       <>
         <DemoTopBar title="Policy admin" subtitle="Governance rules and custody configuration." />
         <main className="ops-page">
-          <AccessDeniedCard
-            message={getAccessDeniedMessage(effectiveRole, "/demo/settings")}
-            role={effectiveRole}
+          <AccessRestrictedPanel
+            restriction={getRouteAccessRestriction("/demo/settings")}
+            currentRole={effectiveRole}
           />
         </main>
       </>

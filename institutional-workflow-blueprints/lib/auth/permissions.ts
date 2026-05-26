@@ -1,4 +1,9 @@
 import type { AuditEvent, Transfer, UserRole } from "@/lib/types";
+import { getRouteAccessRestriction } from "@/lib/auth/access-restriction";
+import { canAccessRoute, resolveAppRouteKey, type AppRouteKey } from "@/lib/auth/route-access";
+
+export type { AppRouteKey };
+export { canAccessRoute, resolveAppRouteKey, getRouteAccessRestriction };
 
 /** Enterprise workflow permissions — Fireblocks TAP remains the custody enforcement layer. */
 export function canCreateSettlements(role: UserRole | null): boolean {
@@ -58,77 +63,8 @@ export function canReadPolicy(role: UserRole | null): boolean {
   return role === "analyst" || role === "treasury_manager" || role === "admin";
 }
 
-export type AppRouteKey =
-  | "operations"
-  | "create"
-  | "policy"
-  | "approvals"
-  | "audit"
-  | "settings";
-
-const ROUTE_ACCESS: Record<AppRouteKey, UserRole[]> = {
-  operations: ["analyst", "treasury_manager", "admin"],
-  create: ["analyst"],
-  policy: ["analyst"],
-  approvals: ["treasury_manager", "admin"],
-  audit: ["admin"],
-  settings: ["admin"],
-};
-
-export function resolveAppRouteKey(pathname: string): AppRouteKey | null {
-  if (pathname === "/demo" || pathname === "/operations") {
-    return "operations";
-  }
-  if (pathname.startsWith("/demo/create")) {
-    return "create";
-  }
-  if (pathname.startsWith("/demo/policy")) {
-    return "policy";
-  }
-  if (pathname.startsWith("/demo/approvals")) {
-    return "approvals";
-  }
-  if (pathname.startsWith("/demo/audit")) {
-    return "audit";
-  }
-  if (pathname.startsWith("/demo/settings")) {
-    return "settings";
-  }
-  return null;
-}
-
-export function canAccessRoute(role: UserRole | null, pathname: string): boolean {
-  if (!role) {
-    return false;
-  }
-
-  const routeKey = resolveAppRouteKey(pathname);
-  if (!routeKey) {
-    return true;
-  }
-
-  return ROUTE_ACCESS[routeKey].includes(role);
-}
-
-export function getAccessDeniedMessage(role: UserRole | null, pathname: string): string {
-  const routeKey = resolveAppRouteKey(pathname);
-  if (!role) {
-    return "Sign in and select an operational role to continue.";
-  }
-
-  switch (routeKey) {
-    case "create":
-    case "policy":
-      return "Only Treasury Analyst can initiate settlement requests.";
-    case "approvals":
-      return "The authorization queue is limited to Treasury Manager and Platform Admin.";
-    case "audit":
-      return "Operational audit logs are limited to Platform Admin.";
-    case "settings":
-      return "Policy and integration administration is limited to Platform Admin.";
-    default:
-      return "Your role does not have access to this workspace.";
-  }
+export function getAccessDeniedMessage(_role: UserRole | null, pathname: string): string {
+  return getRouteAccessRestriction(pathname).message;
 }
 
 export function filterTransfersForRole(transfers: Transfer[], role: UserRole | null): Transfer[] {

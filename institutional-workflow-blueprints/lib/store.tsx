@@ -24,6 +24,7 @@ import {
 } from "@/lib/storage";
 import { formatCurrency } from "@/lib/format";
 import { evaluateTransferPolicy, normalizeAddress } from "@/lib/policy";
+import { getAccessRestrictedMessage } from "@/lib/auth/api-errors";
 import {
   canApproveTransfers,
   canCreateSettlements,
@@ -747,7 +748,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           } catch (error) {
             return {
               ok: false,
-              error: error instanceof Error ? error.message : "Unable to create settlement.",
+              error: getAccessRestrictedMessage(error) ?? (error instanceof Error ? error.message : "Unable to create settlement."),
             };
           }
         }

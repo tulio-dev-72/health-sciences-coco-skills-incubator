@@ -1,5 +1,6 @@
 import type { PolicySettings, Transfer } from "@/lib/types";
 import type { WorkflowSnapshot } from "@/lib/supabase/workflow/mappers";
+import { readApiResponse } from "@/lib/auth/api-errors";
 
 type CreateSettlementBody = {
   asset: string;
@@ -13,17 +14,9 @@ type CreateSettlementBody = {
   blueprintId?: string | null;
 };
 
-async function readJson<T>(response: Response): Promise<T> {
-  const payload = (await response.json()) as T & { error?: string };
-  if (!response.ok) {
-    throw new Error((payload as { error?: string }).error ?? "Workflow request failed.");
-  }
-  return payload;
-}
-
 export async function fetchWorkflowState(): Promise<WorkflowSnapshot> {
   const response = await fetch("/api/workflow/state", { cache: "no-store" });
-  return readJson<WorkflowSnapshot>(response);
+  return readApiResponse<WorkflowSnapshot>(response);
 }
 
 export async function apiCreateSettlement(
@@ -34,7 +27,7 @@ export async function apiCreateSettlement(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  return readJson(response);
+  return readApiResponse(response);
 }
 
 export async function apiApproveSettlement(
@@ -46,7 +39,7 @@ export async function apiApproveSettlement(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(fireblocks ?? {}),
   });
-  const payload = await readJson<{ transfer: Transfer }>(response);
+  const payload = await readApiResponse<{ transfer: Transfer }>(response);
   return payload.transfer;
 }
 
@@ -54,7 +47,7 @@ export async function apiRejectSettlement(externalId: string): Promise<Transfer>
   const response = await fetch(`/api/workflow/settlements/${externalId}/reject`, {
     method: "POST",
   });
-  const payload = await readJson<{ transfer: Transfer }>(response);
+  const payload = await readApiResponse<{ transfer: Transfer }>(response);
   return payload.transfer;
 }
 
@@ -71,7 +64,7 @@ export async function apiUpdateFireblocksStatus(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  const payload = await readJson<{ transfer: Transfer | null }>(response);
+  const payload = await readApiResponse<{ transfer: Transfer | null }>(response);
   return payload.transfer;
 }
 
@@ -81,6 +74,6 @@ export async function apiUpdatePolicy(patch: Partial<PolicySettings>): Promise<P
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(patch),
   });
-  const payload = await readJson<{ policy: PolicySettings }>(response);
+  const payload = await readApiResponse<{ policy: PolicySettings }>(response);
   return payload.policy;
 }

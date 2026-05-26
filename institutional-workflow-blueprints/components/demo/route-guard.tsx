@@ -1,15 +1,16 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { AccessDeniedCard } from "@/components/demo/access-denied-card";
-import { canAccessRoute, getAccessDeniedMessage } from "@/lib/auth/permissions";
+import { AccessRestrictedPanel } from "@/components/demo/access-restricted-panel";
+import { getRouteAccessRestriction } from "@/lib/auth/access-restriction";
+import { canAccessRoute } from "@/lib/auth/permissions";
 import { useAppStore } from "@/lib/store";
 
 export function DemoRouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { effectiveRole, sessionReady } = useAppStore();
 
-  if (!sessionReady || !effectiveRole) {
+  if (!sessionReady || !effectiveRole || pathname.startsWith("/demo/access-restricted")) {
     return children;
   }
 
@@ -19,9 +20,9 @@ export function DemoRouteGuard({ children }: { children: React.ReactNode }) {
 
   return (
     <main className="ops-page">
-      <AccessDeniedCard
-        message={getAccessDeniedMessage(effectiveRole, pathname)}
-        role={effectiveRole}
+      <AccessRestrictedPanel
+        restriction={getRouteAccessRestriction(pathname)}
+        currentRole={effectiveRole}
       />
     </main>
   );

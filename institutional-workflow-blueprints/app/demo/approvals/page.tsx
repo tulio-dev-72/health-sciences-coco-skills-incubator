@@ -170,10 +170,11 @@ export default function ApprovalsPage() {
 
         {!canApprove ? (
           <Card variant="accent">
-            <p className="text-sm font-semibold text-ops-warning">Read-only authorization queue</p>
+            <p className="text-sm font-semibold text-ops-warning">Authorization restricted</p>
             <p className="mt-1.5 text-xs leading-relaxed text-ops-text-secondary">
-              Platform Admin can review pending settlements. Custody authorization and Fireblocks
-              transaction submission are limited to Treasury Manager.
+              {effectiveRole === "admin"
+                ? "Platform Admin can review the authorization queue in read-only mode. Treasury Manager authorization is required for settlement release."
+                : "Treasury Manager authorization is required for settlement release and triggers the Fireblocks transaction creation flow."}
             </p>
           </Card>
         ) : null}

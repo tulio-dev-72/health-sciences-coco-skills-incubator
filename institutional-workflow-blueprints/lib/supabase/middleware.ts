@@ -69,12 +69,14 @@ export async function updateSupabaseSession(request: NextRequest) {
       demoRole &&
       VALID_DEMO_ROLES.has(demoRole) &&
       requiresRole(pathname) &&
+      !pathname.startsWith("/demo/access-restricted") &&
       !canAccessRoute(demoRole as "analyst" | "treasury_manager" | "admin", pathname)
     ) {
-      const deniedUrl = request.nextUrl.clone();
-      deniedUrl.pathname = getRoleDestination(demoRole as "analyst" | "treasury_manager" | "admin");
-      deniedUrl.searchParams.set("denied", "1");
-      return NextResponse.redirect(deniedUrl);
+      const restrictedUrl = request.nextUrl.clone();
+      restrictedUrl.pathname = "/demo/access-restricted";
+      restrictedUrl.search = "";
+      restrictedUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(restrictedUrl);
     }
 
     return response;
@@ -153,11 +155,12 @@ export async function updateSupabaseSession(request: NextRequest) {
       return NextResponse.redirect(roleUrl);
     }
 
-    if (isUserRole(role) && !canAccessRoute(role, pathname)) {
-      const deniedUrl = request.nextUrl.clone();
-      deniedUrl.pathname = getRoleDestination(role);
-      deniedUrl.searchParams.set("denied", "1");
-      return NextResponse.redirect(deniedUrl);
+    if (isUserRole(role) && !pathname.startsWith("/demo/access-restricted") && !canAccessRoute(role, pathname)) {
+      const restrictedUrl = request.nextUrl.clone();
+      restrictedUrl.pathname = "/demo/access-restricted";
+      restrictedUrl.search = "";
+      restrictedUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(restrictedUrl);
     }
   }
 

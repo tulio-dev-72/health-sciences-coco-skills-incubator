@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { accessRestrictedResponse } from "@/lib/auth/access-restriction";
 import { isUserRole } from "@/lib/auth/role-labels";
 import { isDemoModeEnabled } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -20,8 +21,12 @@ export type OperationalAuthContext =
       supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
     };
 
-export function accessDeniedResponse(message = "Access denied for your operational role."): NextResponse {
-  return NextResponse.json({ error: message }, { status: 403 });
+export function accessDeniedResponse(
+  message = "Access restricted for your operational role.",
+  requiredRoles: import("@/lib/types").UserRole[] = ["analyst", "treasury_manager", "admin"],
+  currentRole?: import("@/lib/types").UserRole,
+): NextResponse {
+  return accessRestrictedResponse({ message, requiredRoles, currentRole });
 }
 
 export function unauthorizedResponse(message = "Authentication required."): NextResponse {
@@ -75,7 +80,11 @@ export function assertOperationalRole(
   message?: string,
 ): NextResponse | null {
   if (!allowed.includes(role)) {
-    return accessDeniedResponse(message);
+    return accessRestrictedResponse({
+      message: message ?? "Access restricted for your operational role.",
+      requiredRoles: allowed,
+      currentRole: role,
+    });
   }
   return null;
 }
