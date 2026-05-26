@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { DemoTopBar } from "@/components/demo/top-bar";
 import { PolicyEvaluationCard } from "@/components/demo/policy-evaluation-card";
 import { WorkflowNextStep } from "@/components/demo/workflow-next-step";
-import { WorkflowStepper } from "@/components/demo/workflow-stepper";
+import { ConnectedWorkflowStepper } from "@/components/demo/connected-workflow-stepper";
 import { Card, PrimaryButton } from "@/components/ui/primitives";
 import { useAppStore } from "@/lib/store";
 
@@ -17,7 +17,7 @@ export default function PolicyCheckPage() {
     return (
       <>
         <DemoTopBar title="Policy evaluation" subtitle="Operational governance assessment." />
-        <WorkflowStepper currentStep="policy" />
+        <ConnectedWorkflowStepper />
         <main className="px-3 py-3">
           <Card variant="ghost">
             <p className="text-xs text-ops-text-secondary">
@@ -38,7 +38,7 @@ export default function PolicyCheckPage() {
         title="Policy evaluation"
         subtitle="Institutional treasury governance assessment before authorization release."
       />
-      <WorkflowStepper currentStep="policy" />
+      <ConnectedWorkflowStepper />
 
       <main className="space-y-3 px-3 py-3">
         <PolicyEvaluationCard transfer={transfer} />

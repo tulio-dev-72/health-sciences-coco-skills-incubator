@@ -4,6 +4,8 @@ import Link from "next/link";
 import { RoleBadge, LiveBadge } from "@/components/ui/badges";
 import { getRoleLabel, useAppStore } from "@/lib/store";
 
+const shellMaxWidth = "max-w-lg md:max-w-2xl xl:max-w-4xl";
+
 export function DemoTopBar({
   title,
   subtitle,
@@ -17,35 +19,39 @@ export function DemoTopBar({
 
   return (
     <header className="sticky top-0 z-30 border-b border-ops-border bg-ops-surface/90 shadow-[var(--ops-shadow-sm)] backdrop-blur-md">
-      <div className="mx-auto flex max-w-lg items-start justify-between gap-3 px-3 py-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
+      <div
+        className={`mx-auto flex ${shellMaxWidth} flex-col gap-3 px-3 py-3 sm:flex-row sm:items-start sm:justify-between`}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ops-text-dim">
               Treasury Control Center
             </p>
             <LiveBadge live={state.fireblocksEnabled} />
           </div>
-          <h1 className="mt-0.5 truncate text-sm font-semibold text-ops-text">{title}</h1>
+          <h1 className="mt-0.5 text-sm font-semibold text-ops-text">{title}</h1>
           {subtitle ? (
-            <p className="mt-0.5 line-clamp-2 text-xs text-ops-text-secondary">{subtitle}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-ops-text-secondary">{subtitle}</p>
           ) : null}
         </div>
-        <div className="shrink-0 text-right">
+        <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 sm:flex-col sm:items-end sm:text-right">
           {displayRole ? <RoleBadge role={displayRole} /> : null}
-          <p className="mt-1.5 text-[10px] text-ops-text-dim">{displayName}</p>
-          <Link
-            href="/demo/login"
-            className="mt-1 inline-block text-[10px] text-ops-text-secondary hover:text-ops-primary"
-          >
-            Switch role
-          </Link>
-          <Link
-            href="/"
-            onClick={clearRole}
-            className="mt-0.5 block text-[10px] text-ops-text-dim hover:text-ops-text-secondary"
-          >
-            Exit
-          </Link>
+          <p className="text-[10px] text-ops-text-dim">{displayName}</p>
+          <div className="flex gap-3 sm:flex-col sm:gap-1">
+            <Link
+              href="/demo/login"
+              className="inline-flex min-h-11 items-center text-[11px] font-medium text-ops-text-secondary hover:text-ops-primary"
+            >
+              Switch role
+            </Link>
+            <Link
+              href="/"
+              onClick={clearRole}
+              className="inline-flex min-h-11 items-center text-[11px] text-ops-text-dim hover:text-ops-text-secondary"
+            >
+              Exit
+            </Link>
+          </div>
         </div>
       </div>
     </header>

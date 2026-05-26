@@ -13,6 +13,7 @@ import {
   TextInput,
 } from "@/components/ui/primitives";
 import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
+import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
 import { FireblocksIntegrationPanel } from "@/components/demo/fireblocks-panel";
 import { canManagePolicy } from "@/lib/policy";
 import { truncateAddress } from "@/lib/format";
@@ -144,6 +145,8 @@ export default function SettingsPage() {
             </SecondaryButton>
           </div>
         </Card>
+
+        <MpcCustodyBoundaryPanel compact />
 
         <FireblocksIntegrationPanel />
 

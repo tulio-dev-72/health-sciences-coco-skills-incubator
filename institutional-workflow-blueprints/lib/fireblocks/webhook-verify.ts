@@ -1,5 +1,5 @@
 import { createPublicKey, verify } from "crypto";
-import { getFireblocksConfig } from "@/lib/fireblocks/config";
+import { getFireblocksBaseUrl, getFireblocksConfig } from "@/lib/fireblocks/config";
 
 const SANDBOX_WEBHOOK_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApZE6wL2+7P1ohvVYSpCd
@@ -12,8 +12,7 @@ QwIDAQAB
 -----END PUBLIC KEY-----`;
 
 function isSandboxWorkspace(): boolean {
-  const basePath =
-    getFireblocksConfig()?.basePath ?? process.env.FIREBLOCKS_BASE_PATH ?? "";
+  const basePath = getFireblocksConfig()?.basePath ?? getFireblocksBaseUrl();
   return basePath.includes("sandbox");
 }
 

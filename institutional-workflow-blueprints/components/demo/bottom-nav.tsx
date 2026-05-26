@@ -23,7 +23,7 @@ export function DemoBottomNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ops-border bg-ops-surface/95 shadow-[0_-4px_24px_rgba(15,39,68,0.06)] backdrop-blur-md">
-      <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[max(env(safe-area-inset-bottom),0.375rem)] pt-1">
+      <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[max(env(safe-area-inset-bottom),0.375rem)] pt-1 md:max-w-2xl xl:max-w-4xl">
         {navItems
           .filter((item) => !item.adminOnly || canManagePolicy(effectiveRole))
           .map((item) => {
@@ -35,7 +35,7 @@ export function DemoBottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex min-w-[3.5rem] flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[10px] font-medium transition ${
+                className={`flex min-h-11 min-w-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-2 text-[10px] font-medium transition sm:min-w-[4rem] sm:px-2 ${
                   active
                     ? "bg-ops-primary-muted text-ops-primary"
                     : "text-ops-text-dim hover:bg-ops-overlay hover:text-ops-text-secondary"
@@ -47,7 +47,7 @@ export function DemoBottomNav() {
                     <CountBadge count={pendingCount} />
                   ) : null}
                 </span>
-                <span className="hidden sm:inline">{item.label}</span>
+                <span className="hidden text-[9px] sm:inline">{item.label}</span>
               </Link>
             );
           })}

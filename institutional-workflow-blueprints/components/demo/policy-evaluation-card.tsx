@@ -9,9 +9,9 @@ import { RiskBadge, StatusBadge } from "@/components/ui/badges";
 
 function EvaluationRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-ops-border-subtle py-2.5 last:border-0">
-      <span className="text-[11px] text-ops-text-dim">{label}</span>
-      <span className="text-right text-xs font-medium text-ops-text">{value}</span>
+    <div className="flex flex-col gap-1 border-b border-ops-border-subtle py-2.5 last:border-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      <span className="shrink-0 text-[11px] text-ops-text-dim">{label}</span>
+      <span className="min-w-0 break-words text-xs font-medium text-ops-text sm:text-right">{value}</span>
     </div>
   );
 }

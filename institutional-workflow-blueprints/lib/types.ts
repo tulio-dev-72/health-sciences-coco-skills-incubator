@@ -80,6 +80,8 @@ export type Blueprint = {
   description: string;
   useCase: string;
   buyer: string;
+  /** Short emphasis tags shown on secondary module cards. */
+  emphasis?: string[];
 };
 
 export type AppState = {

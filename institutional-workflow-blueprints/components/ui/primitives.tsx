@@ -45,8 +45,8 @@ export function SectionHeader({
   label?: string;
 }) {
   return (
-    <div className="mb-4 flex items-start justify-between gap-3">
-      <div>
+    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div className="min-w-0 flex-1">
         {label ? (
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ops-text-dim">
             {label}
@@ -86,7 +86,7 @@ export function SecondaryButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-lg border border-ops-border bg-ops-surface px-4 py-2.5 text-xs font-medium text-ops-text shadow-[var(--ops-shadow-sm)] transition hover:border-ops-text-dim/30 hover:bg-ops-overlay disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center whitespace-normal rounded-lg border border-ops-border bg-ops-surface px-4 py-2.5 text-xs font-medium text-ops-text shadow-[var(--ops-shadow-sm)] transition hover:border-ops-text-dim/30 hover:bg-ops-overlay disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}
@@ -101,7 +101,7 @@ export function GhostButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-lg border border-ops-border bg-transparent px-3 py-2 text-xs font-medium text-ops-text-secondary transition hover:border-ops-text-dim/30 hover:bg-ops-overlay hover:text-ops-text disabled:opacity-40 ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center whitespace-normal rounded-lg border border-ops-border bg-transparent px-3 py-2 text-xs font-medium text-ops-text-secondary transition hover:border-ops-text-dim/30 hover:bg-ops-overlay hover:text-ops-text disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}
@@ -116,7 +116,7 @@ export function DangerButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-lg border border-ops-danger/20 bg-ops-danger-muted px-4 py-2.5 text-xs font-medium text-ops-danger transition hover:border-ops-danger/35 disabled:opacity-40 ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center whitespace-normal rounded-lg border border-ops-danger/20 bg-ops-danger-muted px-4 py-2.5 text-xs font-medium text-ops-danger transition hover:border-ops-danger/35 disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}

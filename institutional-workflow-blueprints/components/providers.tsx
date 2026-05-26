@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { AuthStoreSync } from "@/components/auth/auth-store-sync";
+import { WorkflowStoreSync } from "@/components/workflow/workflow-store-sync";
 import { AppProvider } from "@/lib/store";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -10,6 +11,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <AuthProvider>
       <AppProvider>
         <AuthStoreSync />
+        <WorkflowStoreSync />
         {children}
       </AppProvider>
     </AuthProvider>

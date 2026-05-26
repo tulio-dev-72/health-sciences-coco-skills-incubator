@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+*fireblocks*.key
+fireblocks_secret.key
 
 # debug
 npm-debug.log*

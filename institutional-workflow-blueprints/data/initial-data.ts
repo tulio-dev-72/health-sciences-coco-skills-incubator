@@ -15,19 +15,30 @@ export const blueprintLibrary: Blueprint[] = [
     id: "treasury-approval",
     title: "Treasury Approval",
     description:
-      "Govern outbound treasury movements with dual authorization, amount rules, and audit-ready approvals.",
+      "Dual-authorization governance for high-value outbound treasury movements — orchestrate approver routing, amount thresholds, and release to Fireblocks custody.",
     useCase:
-      "Corporate treasury teams route high-value disbursements through manager sign-off before settlement.",
+      "Corporate treasury teams enforce manager sign-off and audit-ready authorization before high-value disbursements settle.",
     buyer: "Corporate treasury & CFO",
+    emphasis: [
+      "Approval governance",
+      "High-value treasury controls",
+      "Authorization orchestration",
+    ],
   },
   {
     id: "exchange-withdrawal-review",
     title: "Exchange Withdrawal Review",
     description:
-      "Review exchange-linked withdrawal requests against policy, risk signals, and institutional approval rules.",
+      "Exchange-linked withdrawal review — apply policy enforcement, operational risk assessment, and institutional approval before assets leave omnibus custody.",
     useCase:
-      "Institutional trading desks apply this pattern before releasing assets from omnibus accounts to external venues.",
+      "Trading desks gate withdrawals to external venues through governance review before Fireblocks signs and broadcasts.",
     buyer: "Trading desk & liquidity",
+    emphasis: [
+      "Exchange operations",
+      "Withdrawal governance",
+      "Policy enforcement",
+      "Operational risk review",
+    ],
   },
 ];
 

@@ -16,16 +16,18 @@ export function PoweredByFireblocksCard({ compact = false }: { compact?: boolean
 
   return (
     <Card variant="elevated">
-      <div className="flex items-start justify-between gap-2">
-        <SectionHeader
-          label="Infrastructure"
-          title="Fireblocks custody"
-          subtitle={
-            compact
-              ? "Signing and settlement run on Fireblocks infrastructure."
-              : "Business approval in this app. Custody, policy, and settlement on Fireblocks."
-          }
-        />
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <SectionHeader
+            label="Infrastructure"
+            title="Fireblocks custody"
+            subtitle={
+              compact
+                ? "Signing and settlement run on Fireblocks infrastructure."
+                : "Business approval in this app. Custody, policy, and settlement on Fireblocks."
+            }
+          />
+        </div>
         <LiveBadge live={state.fireblocksEnabled} />
       </div>
 
@@ -44,6 +46,7 @@ export function PoweredByFireblocksCard({ compact = false }: { compact?: boolean
       </div>
 
       <p className="mt-2.5 rounded-lg border border-ops-border-subtle bg-ops-overlay/40 px-2.5 py-2 text-[11px] text-ops-text-secondary">
+        Real Fireblocks sandbox infrastructure using test assets, not mainnet funds.{" "}
         {state.fireblocksEnabled ? (
           <>
             <span className="font-medium text-ops-text">On approve:</span> payout released to

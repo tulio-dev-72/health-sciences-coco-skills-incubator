@@ -40,7 +40,7 @@ export function useFireblocksStatusSync() {
             return;
           }
 
-          syncFireblocksTransferStatus({
+          await syncFireblocksTransferStatus({
             externalTxId: transfer.id,
             fireblocksTxId: status.fireblocksTxId,
             status: status.status,

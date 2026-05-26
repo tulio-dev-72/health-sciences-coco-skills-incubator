@@ -1,24 +1,25 @@
 import { NextResponse } from "next/server";
-import { isFireblocksConfigured } from "@/lib/fireblocks/config";
-import { submitFireblocksTransaction } from "@/lib/fireblocks/service";
+
+import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
+import { createTransaction } from "@/lib/fireblocks/service";
 import { upsertTransactionRecord } from "@/lib/fireblocks/webhook-store";
 
 export const runtime = "nodejs";
 
 type SubmitBody = {
   externalTxId?: string;
-  asset?: string;
+  assetId?: string;
+  sourceVaultId?: string;
   amount?: number;
   destination?: string;
+  destinationAddress?: string;
   note?: string;
 };
 
 export async function POST(request: Request) {
-  if (!isFireblocksConfigured()) {
-    return NextResponse.json(
-      { error: "Fireblocks is not configured on the server." },
-      { status: 503 },
-    );
+  const unavailable = requireFireblocksConfigured();
+  if (unavailable) {
+    return unavailable;
   }
 
   let body: SubmitBody;
@@ -28,11 +29,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { externalTxId, asset, amount, destination, note } = body;
+  const externalTxId = body.externalTxId?.trim();
+  const assetId = body.assetId?.trim();
+  const sourceVaultId = body.sourceVaultId?.trim();
+  const destination = (body.destinationAddress ?? body.destination)?.trim();
+  const note = body.note?.trim();
+  const amount = body.amount;
 
-  if (!externalTxId || !asset || !destination || !note) {
+  if (!externalTxId || !assetId || !sourceVaultId || !destination || !note) {
     return NextResponse.json(
-      { error: "externalTxId, asset, destination, and note are required." },
+      {
+        error:
+          "externalTxId, assetId, sourceVaultId, destination, and note are required.",
+      },
       { status: 400 },
     );
   }
@@ -42,11 +51,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await submitFireblocksTransaction({
-      externalTxId,
-      asset,
+    const result = await createTransaction({
+      sourceVaultId,
+      assetId,
       amount,
-      destination,
+      destinationAddress: destination,
+      externalTxId,
       note,
     });
 

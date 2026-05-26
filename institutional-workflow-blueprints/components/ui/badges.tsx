@@ -88,6 +88,24 @@ export function LiveBadge({ live }: { live: boolean }) {
   );
 }
 
+export function IntegrationStatusBadge({
+  status,
+}: {
+  status: "connected" | "offline";
+}) {
+  return (
+    <span
+      className={`${badgeBase} ${
+        status === "connected"
+          ? "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/15"
+          : "bg-ops-overlay text-ops-text-secondary ring-1 ring-ops-border"
+      }`}
+    >
+      {status === "connected" ? "Connected" : "Offline"}
+    </span>
+  );
+}
+
 export function PrototypeModeBadge() {
   return (
     <span

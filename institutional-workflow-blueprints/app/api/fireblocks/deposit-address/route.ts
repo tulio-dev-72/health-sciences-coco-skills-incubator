@@ -1,46 +1,46 @@
 import { NextResponse } from "next/server";
-import { getFireblocksConfig, isFireblocksConfigured } from "@/lib/fireblocks/config";
-import { getFireblocksDepositAddress } from "@/lib/fireblocks/service";
 
-const SEPOLIA_ASSET_CANDIDATES = ["ETH_TEST5", "ETH_TEST3", "ETH_TEST", "ETH"];
+import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
+import { getDepositAddress, getTreasuryMainVault } from "@/lib/fireblocks/service";
 
 export async function GET(request: Request) {
-  if (!isFireblocksConfigured()) {
-    return NextResponse.json(
-      { error: "Fireblocks is not configured on the server." },
-      { status: 503 },
-    );
+  const unavailable = requireFireblocksConfigured();
+  if (unavailable) {
+    return unavailable;
   }
 
-  const config = getFireblocksConfig();
   const { searchParams } = new URL(request.url);
-  const vaultAccountId = searchParams.get("vaultAccountId") ?? config?.sourceVaultId ?? "0";
-  const requestedAssetId = searchParams.get("assetId");
-  const candidates = requestedAssetId ? [requestedAssetId] : SEPOLIA_ASSET_CANDIDATES;
+  const assetId = searchParams.get("assetId")?.trim();
+  const vaultAccountId = searchParams.get("vaultAccountId")?.trim();
 
-  const errors: string[] = [];
+  if (!assetId) {
+    return NextResponse.json({ error: "assetId query parameter is required." }, { status: 400 });
+  }
 
-  for (const assetId of candidates) {
-    try {
-      const result = await getFireblocksDepositAddress(vaultAccountId, assetId);
-      return NextResponse.json({
-        ...result,
-        faucetHint: "Paste this address into https://sepoliafaucet.com to fund your Sandbox vault.",
-      });
-    } catch (error) {
-      errors.push(
-        `${assetId}: ${error instanceof Error ? error.message : "unknown error"}`,
+  try {
+    const vault = vaultAccountId
+      ? { id: vaultAccountId }
+      : await getTreasuryMainVault();
+
+    if (!vault?.id) {
+      return NextResponse.json(
+        { error: "Treasury Main vault not found. Pass vaultAccountId or configure Fireblocks." },
+        { status: 404 },
       );
     }
-  }
 
-  return NextResponse.json(
-    {
-      error: "Could not resolve a Sepolia deposit address.",
-      details: errors,
-      hint:
-        "If you see 'invalid signature', recreate the API user with treasury-demo CSR and update FIREBLOCKS_API_KEY.",
-    },
-    { status: 502 },
-  );
+    const result = await getDepositAddress(vault.id, assetId);
+    return NextResponse.json({
+      ...result,
+      vaultAccountId: result.vaultId,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Could not resolve deposit address.",
+      },
+      { status: 502 },
+    );
+  }
 }

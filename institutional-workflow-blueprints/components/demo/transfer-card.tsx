@@ -14,7 +14,7 @@ export function TransferCard({ transfer }: { transfer: Transfer }) {
 
   return (
     <Card variant={isException ? "accent" : "elevated"}>
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-mono text-[10px] uppercase tracking-wide text-ops-text-dim">
             externalTxId · {transfer.id}
@@ -53,7 +53,7 @@ export function TransferCard({ transfer }: { transfer: Transfer }) {
         {transfer.fireblocksTxId ? (
           <p className="flex flex-wrap items-center gap-1.5">
             <span className="text-ops-text-dim">fireblocksTxId</span>
-            <span className="font-mono text-[10px] text-ops-text">{transfer.fireblocksTxId}</span>
+            <span className="break-all font-mono text-[10px] text-ops-text">{transfer.fireblocksTxId}</span>
             {transfer.fireblocksStatus ? (
               <FireblocksStatusBadge status={transfer.fireblocksStatus} />
             ) : null}

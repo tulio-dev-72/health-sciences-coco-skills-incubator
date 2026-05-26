@@ -3,6 +3,7 @@
 import { Card, SectionHeader } from "@/components/ui/primitives";
 import {
   APP_TERMS,
+  CUSTODY_LAYER_ARCHITECTURE,
   infrastructureMapping,
   integrationReadinessNote,
 } from "@/data/infrastructure-mapping";
@@ -15,8 +16,25 @@ export function InfrastructureMappingCard({ compact = false }: { compact?: boole
       <SectionHeader
         label="Integration architecture"
         title="Infrastructure mapping"
-        subtitle="How sandbox workflows map to Fireblocks platform and API concepts."
+        subtitle="Workflow Layer → Fireblocks MPC Custody Layer → Blockchain Settlement Rail"
       />
+
+      <div className="mb-3 rounded-lg border border-ops-border-subtle bg-ops-overlay/40 px-3 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-dim">
+          {CUSTODY_LAYER_ARCHITECTURE.title}
+        </p>
+        <div className="mt-2 space-y-2">
+          {CUSTODY_LAYER_ARCHITECTURE.layers.map((layer, index) => (
+            <div key={layer.label} className="flex gap-2">
+              <span className="mt-0.5 text-[10px] font-bold text-ops-primary">{index + 1}</span>
+              <div>
+                <p className="text-xs font-semibold text-ops-text">{layer.label}</p>
+                <p className="text-[11px] leading-relaxed text-ops-text-secondary">{layer.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="space-y-2">
         {rows.map((row) => (
@@ -59,7 +77,7 @@ export function InfrastructureMappingCard({ compact = false }: { compact?: boole
 export function InfrastructureMappingLegend() {
   return (
     <div className="flex flex-wrap gap-2">
-      {Object.values(APP_TERMS).slice(0, 5).map((term) => (
+      {Object.values(APP_TERMS).slice(0, 6).map((term) => (
         <span
           key={term}
           className="rounded border border-ops-border bg-ops-surface px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-ops-text-secondary"

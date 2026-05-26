@@ -13,6 +13,16 @@ In Supabase → **SQL Editor**, run:
 
 Creates `user_profiles` with RLS and roles: `analyst`, `treasury_manager`, `admin`.
 
+Also creates workflow tables:
+
+| Table | Purpose |
+|-------|---------|
+| `settlement_requests` | Settlement lifecycle state |
+| `approvals` | Authorization decisions |
+| `policies` | TAP rules and allowlist |
+| `audit_logs` | Every workflow action |
+| `fireblocks_events` | Webhook / custody events |
+
 ## 3. Environment variables
 
 Copy `.env.example` → `.env.local`:

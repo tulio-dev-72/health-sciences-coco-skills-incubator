@@ -19,8 +19,8 @@ export function OpsCommandCard() {
 
   return (
     <Card variant="accent">
-      <div className="flex items-start justify-between gap-2">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ops-primary">
             Operations command
           </p>
@@ -32,7 +32,7 @@ export function OpsCommandCard() {
         <LiveBadge live={state.fireblocksEnabled} />
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <StatTile label="Awaiting" value={pending} accent />
         <StatTile label="Cleared" value={settled} />
         <StatTile label="In batch" value={state.transfers.length} />
@@ -54,7 +54,7 @@ export function OpsCommandCard() {
             {canApprove ? "Open transaction authorization" : "View authorization queue"}
           </PrimaryButton>
         </Link>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Link href="/demo/audit">
             <GhostButton className="w-full">Audit log</GhostButton>
           </Link>

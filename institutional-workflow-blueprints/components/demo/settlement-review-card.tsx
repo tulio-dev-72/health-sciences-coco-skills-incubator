@@ -1,16 +1,26 @@
+import type { ReactNode } from "react";
 import type { Transfer } from "@/lib/types";
 import { getSettlementEvaluation } from "@/lib/policy";
 import { formatCurrency } from "@/lib/format";
 import { Card } from "@/components/ui/primitives";
 import { RiskBadge, StatusBadge } from "@/components/ui/badges";
 
+function ReviewRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 border-b border-ops-border-subtle pb-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+      <span className="shrink-0 text-ops-text-dim">{label}</span>
+      <span className="min-w-0 break-words font-medium text-ops-text sm:text-right">{value}</span>
+    </div>
+  );
+}
+
 export function SettlementReviewCard({ transfer }: { transfer: Transfer }) {
   const evaluation = getSettlementEvaluation(transfer);
 
   return (
     <Card variant="elevated">
-      <div className="flex items-start justify-between gap-2">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-dim">
             Settlement review
           </p>
@@ -22,30 +32,12 @@ export function SettlementReviewCard({ transfer }: { transfer: Transfer }) {
       </div>
 
       <div className="mt-3 grid gap-2 text-xs">
-        <div className="flex justify-between gap-3 border-b border-ops-border-subtle pb-2">
-          <span className="text-ops-text-dim">Vault Account</span>
-          <span className="font-medium text-ops-text">{evaluation.vaultAccount}</span>
-        </div>
-        <div className="flex justify-between gap-3 border-b border-ops-border-subtle pb-2">
-          <span className="text-ops-text-dim">Counterparty</span>
-          <span className="font-medium text-ops-text">{evaluation.counterparty}</span>
-        </div>
-        <div className="flex justify-between gap-3 border-b border-ops-border-subtle pb-2">
-          <span className="text-ops-text-dim">Settlement Rail</span>
-          <span className="font-medium text-ops-text">{evaluation.settlementRail}</span>
-        </div>
-        <div className="flex justify-between gap-3 border-b border-ops-border-subtle pb-2">
-          <span className="text-ops-text-dim">Risk Level</span>
-          <RiskBadge level={transfer.riskLevel} />
-        </div>
-        <div className="flex justify-between gap-3 border-b border-ops-border-subtle pb-2">
-          <span className="text-ops-text-dim">Policy Trigger</span>
-          <span className="font-medium text-ops-text">{evaluation.policyTrigger}</span>
-        </div>
-        <div className="flex justify-between gap-3">
-          <span className="text-ops-text-dim">Reason</span>
-          <span className="text-right font-medium text-ops-text">{transfer.reason}</span>
-        </div>
+        <ReviewRow label="Vault Account" value={evaluation.vaultAccount} />
+        <ReviewRow label="Counterparty" value={evaluation.counterparty} />
+        <ReviewRow label="Settlement Rail" value={evaluation.settlementRail} />
+        <ReviewRow label="Risk Level" value={<RiskBadge level={transfer.riskLevel} />} />
+        <ReviewRow label="Policy Trigger" value={evaluation.policyTrigger} />
+        <ReviewRow label="Reason" value={transfer.reason} />
       </div>
     </Card>
   );

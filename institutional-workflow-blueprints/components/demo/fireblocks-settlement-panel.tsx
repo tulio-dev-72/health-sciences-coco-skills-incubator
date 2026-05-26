@@ -18,9 +18,11 @@ export function FireblocksSettlementPanel({
   if (phase === "creating") {
     return (
       <Card variant="elevated">
-        <p className="text-xs font-medium text-ops-text">Creating Fireblocks transaction…</p>
+        <p className="text-xs font-medium text-ops-text">
+          Server-side SDK transaction orchestration…
+        </p>
         <p className="mt-1 text-[11px] text-ops-text-secondary">
-          Releasing authorized settlement to Fireblocks custody infrastructure.
+          Crossing the custody/signing boundary — Fireblocks MPC-secured custody handles signing.
         </p>
       </Card>
     );
@@ -31,8 +33,8 @@ export function FireblocksSettlementPanel({
       <Card variant="accent" className="ring-1 ring-ops-info/15">
         <SectionHeader
           label="Infrastructure boundary"
-          title="Fireblocks Transaction Created"
-          subtitle="Workflow orchestration ends here — custody, signing, and transaction orchestration are handled by Fireblocks."
+          title="Fireblocks MPC Custody + Signing"
+          subtitle="This app orchestrates workflow only — MPC-secured custody and signing remain inside Fireblocks."
         />
         <div className="mt-2 space-y-1.5 font-mono text-[11px] text-ops-text-secondary">
           <p>
@@ -54,8 +56,8 @@ export function FireblocksSettlementPanel({
         <Card variant="elevated">
           <SectionHeader
             label="Event-driven status"
-            title="Webhook Transaction Lifecycle"
-            subtitle="Fireblocks POSTs signed lifecycle events — UI reflects custody progression."
+            title="Webhook Lifecycle Updates"
+            subtitle="Fireblocks authorization lifecycle events — not simulated UI state."
           />
           <div className="space-y-2">
             {webhookStatuses.map((status) => (

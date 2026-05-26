@@ -3,32 +3,40 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DemoTopBar } from "@/components/demo/top-bar";
-import { WorkflowStepper } from "@/components/demo/workflow-stepper";
+import { FireblocksSettlementInfrastructure } from "@/components/demo/fireblocks-settlement-infrastructure";
+import { ConnectedWorkflowStepper } from "@/components/demo/connected-workflow-stepper";
 import { Card, InputLabel, PrimaryButton, SectionHeader, TextInput } from "@/components/ui/primitives";
 import { PRIMARY_SETTLEMENT } from "@/data/primary-scenario";
+import { useFireblocksTreasury } from "@/lib/fireblocks/use-fireblocks-treasury";
 import { formatCurrency } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 
 export default function CreateTransferPage() {
   const router = useRouter();
   const { state, createTransfer, setWorkflowStep, setActiveBlueprint } = useAppStore();
+  const treasury = useFireblocksTreasury();
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const settlement = PRIMARY_SETTLEMENT;
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setActiveBlueprint("stablecoin-payouts");
 
-    const result = createTransfer({
-      asset: settlement.asset,
+    const settlementAsset =
+      treasury.state.integrationStatus === "connected" && treasury.selectedAsset
+        ? treasury.selectedAsset.assetId
+        : settlement.asset;
+
+    const result = await createTransfer({
+      asset: settlementAsset,
       amount: settlement.amount,
       destination: settlement.counterpartyAddress,
       destinationLabel: settlement.counterparty,
       reason: settlement.reason,
-      sourceVault: settlement.sourceVault,
+      sourceVault: treasury.state.vault?.name ?? settlement.sourceVault,
       settlementRail: settlement.settlementRail,
       counterparty: settlement.counterparty,
     });
@@ -47,36 +55,55 @@ export default function CreateTransferPage() {
     <>
       <DemoTopBar
         title="Initiate Settlement"
-        subtitle="Submit high-value USDC settlement request for policy evaluation and authorization."
+        subtitle="Submit settlement request using live Fireblocks sandbox discovery when configured."
       />
-      <WorkflowStepper currentStep="create" />
+      <ConnectedWorkflowStepper />
 
       <main className="px-3 py-3">
         <form onSubmit={handleSubmit} className="space-y-3">
+          <FireblocksSettlementInfrastructure treasury={treasury} amount={settlement.amount} />
+
           <Card variant="elevated">
             <SectionHeader
               label="Settlement request"
-              title="Outbound USDC settlement"
-              subtitle={`Available ${formatCurrency(state.vaultBalances[0]?.available ?? 0, settlement.asset)} in ${settlement.sourceVault}`}
+              title="Outbound settlement"
+              subtitle={
+                treasury.state.integrationStatus === "connected" && treasury.selectedAsset
+                  ? `Available ${formatCurrency(treasury.selectedAsset.available, treasury.selectedAsset.assetId)} in ${treasury.state.vault?.name ?? settlement.sourceVault}`
+                  : `Fireblocks offline / degraded mode`
+              }
             />
 
             <div className="space-y-4">
               <div>
-                <InputLabel htmlFor="asset">Asset</InputLabel>
-                <TextInput id="asset" value={settlement.asset} readOnly className="bg-ops-overlay/50" />
+                <InputLabel htmlFor="asset">Asset (Fireblocks assetId)</InputLabel>
+                <TextInput
+                  id="asset"
+                  value={treasury.selectedAsset?.assetId ?? settlement.asset}
+                  readOnly
+                  className="bg-ops-overlay/50 font-mono text-[11px]"
+                />
               </div>
               <div>
                 <InputLabel htmlFor="amount">Amount</InputLabel>
                 <TextInput
                   id="amount"
-                  value={formatCurrency(settlement.amount, settlement.asset)}
+                  value={formatCurrency(
+                    settlement.amount,
+                    treasury.selectedAsset?.assetId ?? settlement.asset,
+                  )}
                   readOnly
                   className="bg-ops-overlay/50 font-semibold tabular-nums"
                 />
               </div>
               <div>
                 <InputLabel htmlFor="sourceVault">Source Vault</InputLabel>
-                <TextInput id="sourceVault" value={settlement.sourceVault} readOnly className="bg-ops-overlay/50" />
+                <TextInput
+                  id="sourceVault"
+                  value={treasury.state.vault?.name ?? settlement.sourceVault}
+                  readOnly
+                  className="bg-ops-overlay/50"
+                />
               </div>
               <div>
                 <InputLabel htmlFor="counterparty">Counterparty</InputLabel>

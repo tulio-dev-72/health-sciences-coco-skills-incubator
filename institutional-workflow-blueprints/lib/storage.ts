@@ -3,6 +3,7 @@ import { defaultPolicy, getFireblocksDemoVaultBalances } from "@/data/initial-da
 import { DEFAULT_BLUEPRINT_ID } from "@/data/demo-guide";
 import { getPrimaryVaultBalances, PRIMARY_BLUEPRINT_ID } from "@/data/primary-scenario";
 import { applyDemoScenario } from "@/data/demo-scenarios";
+import { normalizeWorkflowStep } from "@/lib/workflow";
 
 const STORAGE_KEY = "institutional-workflow-blueprints/session";
 const SESSION_ROLE_KEY = "institutional-workflow-blueprints/role";
@@ -215,7 +216,7 @@ export function reseedDemoForBlueprint(state: AppState, blueprintId: string): Ap
     lastTransferId: null,
     policySummary: null,
     fireblocksEnabled: true,
-    workflowStep: "login",
+    workflowStep: "create",
   };
 }
 
@@ -223,7 +224,7 @@ export function createEmptyState(): AppState {
   return withDemoPendingIfEmpty({
     role: null,
     activeBlueprint: DEFAULT_BLUEPRINT_ID,
-    workflowStep: "blueprint",
+    workflowStep: "create",
     lastTransferId: null,
     policySummary: null,
     policy: defaultPolicy,
@@ -254,7 +255,7 @@ export function loadPersistedState(): AppState | null {
     return withDemoPendingIfEmpty({
       role: storedRole,
       activeBlueprint: parsed.activeBlueprint ?? DEFAULT_BLUEPRINT_ID,
-      workflowStep: parsed.workflowStep ?? "blueprint",
+      workflowStep: normalizeWorkflowStep(parsed.workflowStep),
       lastTransferId: parsed.lastTransferId ?? null,
       policySummary: parsed.policySummary ?? null,
       policy: {

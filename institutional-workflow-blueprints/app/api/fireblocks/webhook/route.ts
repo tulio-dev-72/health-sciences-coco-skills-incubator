@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
-import { handleFireblocksWebhookEvent } from "@/lib/fireblocks/webhook-events";
+import {
+  getWebhookEndpointOrigin,
+  handleFireblocksWebhookEvent,
+} from "@/lib/fireblocks/webhook-events";
 import { verifyFireblocksWebhookSignature } from "@/lib/fireblocks/webhook-verify";
 
 export const runtime = "nodejs";
 
+/** @deprecated Use POST /api/webhooks/fireblocks */
 export async function POST(request: Request) {
   const rawBody = Buffer.from(await request.arrayBuffer());
   const signature =
@@ -22,8 +26,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    await handleFireblocksWebhookEvent(payload);
-    return NextResponse.json({ ok: true });
+    const result = await handleFireblocksWebhookEvent(payload, { signatureValid: true });
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       {
@@ -36,10 +40,11 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const origin = new URL(request.url).origin;
+  const origin = getWebhookEndpointOrigin(request);
 
   return NextResponse.json({
-    endpoint: `${origin}/api/fireblocks/webhook`,
+    endpoint: `${origin}/api/webhooks/fireblocks`,
+    legacyEndpoint: `${origin}/api/fireblocks/webhook`,
     method: "POST",
     events: [
       "TRANSACTION_CREATED",

@@ -1,12 +1,7 @@
 import { APP_TERMS } from "@/data/infrastructure-mapping";
+import type { SettlementLifecycleStepId } from "@/data/settlement-lifecycle";
 
-export type WorkflowStepId =
-  | "blueprint"
-  | "login"
-  | "create"
-  | "policy"
-  | "approval"
-  | "audit";
+export type WorkflowStepId = SettlementLifecycleStepId;
 
 export type WorkflowStep = {
   id: WorkflowStepId;
@@ -18,25 +13,11 @@ export type WorkflowStep = {
 
 export const workflowSteps: WorkflowStep[] = [
   {
-    id: "blueprint",
-    label: "Operations module",
-    shortLabel: "Module",
-    path: "/",
-    fireblocksConcept: "Use case configuration",
-  },
-  {
-    id: "login",
-    label: "Role authentication",
-    shortLabel: "Auth",
-    path: "/demo/login",
-    fireblocksConcept: "Access control",
-  },
-  {
     id: "create",
     label: APP_TERMS.createSettlement,
-    shortLabel: "Create",
+    shortLabel: "Request",
     path: "/demo/create",
-    fireblocksConcept: "POST /v1/transactions (draft)",
+    fireblocksConcept: "Settlement request draft",
   },
   {
     id: "policy",
@@ -53,9 +34,23 @@ export const workflowSteps: WorkflowStep[] = [
     fireblocksConcept: "Authorization release",
   },
   {
+    id: "custody",
+    label: APP_TERMS.mpcCustodySigning,
+    shortLabel: "MPC Custody",
+    path: "/demo/approvals",
+    fireblocksConcept: "Server-side SDK · POST /v1/transactions",
+  },
+  {
+    id: "webhook",
+    label: APP_TERMS.webhookLifecycle,
+    shortLabel: "Webhooks",
+    path: "/demo/approvals",
+    fireblocksConcept: "Fireblocks authorization lifecycle",
+  },
+  {
     id: "audit",
     label: APP_TERMS.auditLogs,
-    shortLabel: "Logs",
+    shortLabel: "Audit",
     path: "/demo/audit",
     fireblocksConcept: "Transaction history",
   },
@@ -70,17 +65,37 @@ export function getWorkflowStepPath(stepId: WorkflowStepId): string {
 }
 
 export function getStepFromPath(pathname: string): WorkflowStepId {
-  if (pathname === "/") return "blueprint";
-  if (pathname.startsWith("/demo/login")) return "login";
   if (pathname.startsWith("/demo/create")) return "create";
   if (pathname.startsWith("/demo/policy")) return "policy";
   if (pathname.startsWith("/demo/approvals")) return "approval";
   if (pathname.startsWith("/demo/audit")) return "audit";
-  return "blueprint";
+  return "create";
 }
 
 export function getLoginRouteForRole(
   _role: "analyst" | "treasury_manager" | "admin",
 ): { step: WorkflowStepId; path: string } {
   return { step: "create", path: "/demo" };
+}
+
+const LEGACY_WORKFLOW_STEPS: Record<string, WorkflowStepId> = {
+  blueprint: "create",
+  login: "create",
+};
+
+/** Normalize persisted or legacy workflow step ids. */
+export function normalizeWorkflowStep(step: string | null | undefined): WorkflowStepId {
+  if (!step) {
+    return "create";
+  }
+
+  if (step in LEGACY_WORKFLOW_STEPS) {
+    return LEGACY_WORKFLOW_STEPS[step];
+  }
+
+  if (workflowSteps.some((item) => item.id === step)) {
+    return step as WorkflowStepId;
+  }
+
+  return "create";
 }

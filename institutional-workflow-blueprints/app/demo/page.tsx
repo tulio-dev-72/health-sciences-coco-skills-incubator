@@ -36,7 +36,7 @@ export default function DemoDashboardPage() {
         <OpsCommandCard />
         <UseCaseContextCard />
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <StatTile label="Pending authorization" value={pendingPayouts.length} accent />
           <StatTile label="Settled" value={clearedToday.length} />
         </div>
@@ -89,8 +89,8 @@ export default function DemoDashboardPage() {
           <div className="space-y-2">
             {state.vaultBalances.map((vault) => (
               <Card key={`${vault.asset}-${vault.label}`} variant="elevated">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-[10px] uppercase tracking-wide text-ops-text-dim">
                       {vault.label}
                     </p>

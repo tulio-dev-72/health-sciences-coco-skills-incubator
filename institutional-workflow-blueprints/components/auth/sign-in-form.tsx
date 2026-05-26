@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { DemoAccountsPanel } from "@/components/auth/demo-accounts-panel";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Card, InputLabel, PrimaryButton, SectionHeader, TextInput } from "@/components/ui/primitives";
+import { DEMO_SANDBOX_LABEL } from "@/data/demo-accounts";
 import { isDemoModeEnabled } from "@/lib/supabase/config";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { fetchUserProfile } from "@/lib/supabase/profiles";
+import { AUTH_ROLE } from "@/lib/supabase/routes";
 
 export function SignInForm() {
   const router = useRouter();
@@ -16,6 +20,7 @@ export function SignInForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [demoPanelOpen, setDemoPanelOpen] = useState(false);
   const next = searchParams.get("next") ?? "/";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -36,7 +41,17 @@ export function SignInForm() {
       }
 
       await refreshSession();
-      router.push(next);
+
+      const {
+        data: { user: signedInUser },
+      } = await supabase.auth.getUser();
+
+      if (signedInUser) {
+        const userProfile = await fetchUserProfile(supabase, signedInUser.id);
+        router.push(userProfile?.role ? next : AUTH_ROLE);
+      } else {
+        router.push(next);
+      }
       router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Sign in failed.");
@@ -101,6 +116,29 @@ export function SignInForm() {
             {submitting ? "Signing in…" : "Sign in"}
           </PrimaryButton>
         </form>
+      </Card>
+
+      <Card variant="ghost" className="border-ops-border-subtle bg-ops-overlay/30">
+        <button
+          type="button"
+          onClick={() => setDemoPanelOpen((current) => !current)}
+          className="flex min-h-11 w-full items-center justify-between text-left"
+        >
+          <span className="text-xs font-semibold text-ops-text">Demo Accounts</span>
+          <span className="text-[10px] text-ops-text-dim">{demoPanelOpen ? "Hide" : "Show"}</span>
+        </button>
+        {demoPanelOpen ? (
+          <div className="mt-3 border-t border-ops-border-subtle pt-3">
+            <DemoAccountsPanel
+              onSelectAccount={({ email, password }) => {
+                setEmail(email);
+                setPassword(password);
+              }}
+            />
+          </div>
+        ) : (
+          <p className="mt-2 text-[11px] text-ops-text-secondary">{DEMO_SANDBOX_LABEL}</p>
+        )}
       </Card>
 
       <p className="text-center text-xs text-ops-text-secondary">

@@ -1,11 +1,35 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  AUTH_ROLE,
+  AUTH_SIGN_IN,
+  AUTH_SIGN_UP,
+  buildSignInUrl,
+  isPublicAuthPath,
+  isRoleSelectionPath,
+  requiresAuth,
+  requiresRole,
+} from "@/lib/supabase/routes";
 import { getSupabasePublicConfig, isDemoModeEnabled, isSupabaseConfigured } from "@/lib/supabase/config";
 
 const VALID_DEMO_ROLES = new Set(["analyst", "treasury_manager", "admin"]);
 
+async function fetchProfileRole(
+  supabase: ReturnType<typeof createServerClient>,
+  userId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("user_profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return data?.role ?? null;
+}
+
 export async function updateSupabaseSession(request: NextRequest) {
   let response = NextResponse.next({ request });
+  const pathname = request.nextUrl.pathname;
 
   if (isDemoModeEnabled()) {
     const role = request.nextUrl.searchParams.get("role");
@@ -46,42 +70,44 @@ export async function updateSupabaseSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-  const isDemoRoute = pathname.startsWith("/demo");
-
-  if (isDemoRoute && !user) {
+  if (!user && requiresAuth(pathname)) {
     const signInUrl = request.nextUrl.clone();
-    signInUrl.pathname = "/auth/sign-in";
+    signInUrl.pathname = AUTH_SIGN_IN;
     signInUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(signInUrl);
   }
 
-  if (user && (pathname === "/auth/sign-in" || pathname === "/auth/sign-up")) {
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-
+  if (user && isPublicAuthPath(pathname)) {
+    const role = await fetchProfileRole(supabase, user.id);
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.search = "";
-    redirectUrl.pathname = profile?.role ? "/" : "/auth/role";
+    redirectUrl.pathname = role ? "/" : AUTH_ROLE;
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && pathname === "/auth/role") {
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profile?.role) {
+  if (user && isRoleSelectionPath(pathname)) {
+    const role = await fetchProfileRole(supabase, user.id);
+    if (role) {
       const homeUrl = request.nextUrl.clone();
       homeUrl.pathname = "/";
       homeUrl.search = "";
       return NextResponse.redirect(homeUrl);
     }
+    return response;
+  }
+
+  if (user && requiresRole(pathname)) {
+    const role = await fetchProfileRole(supabase, user.id);
+    if (!role) {
+      const roleUrl = request.nextUrl.clone();
+      roleUrl.pathname = AUTH_ROLE;
+      roleUrl.search = "";
+      return NextResponse.redirect(roleUrl);
+    }
+  }
+
+  if (!user && pathname === AUTH_ROLE) {
+    return NextResponse.redirect(new URL(buildSignInUrl(AUTH_ROLE), request.url));
   }
 
   return response;

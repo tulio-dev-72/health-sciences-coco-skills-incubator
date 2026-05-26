@@ -6,6 +6,8 @@ import { Card, PrimaryButton } from "@/components/ui/primitives";
 import { useAppStore } from "@/lib/store";
 import { PRIMARY_BLUEPRINT_ID } from "@/data/primary-scenario";
 
+const SECONDARY_INFRA_LABEL = "Uses same MPC custody + authorization layer";
+
 export function BlueprintLibraryCard({
   blueprint,
   variant = "default",
@@ -57,19 +59,32 @@ export function BlueprintLibraryCard({
   }
 
   return (
-    <Card variant="elevated" className="flex h-full flex-col opacity-90">
-      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-ops-text-dim">
-        Secondary module · {blueprint.buyer}
+    <article className="rounded-lg border border-ops-border-subtle/70 bg-ops-surface/40 px-3 py-2.5">
+      <p className="text-[9px] leading-snug text-ops-text-dim">{SECONDARY_INFRA_LABEL}</p>
+      <p className="mt-1.5 text-[9px] font-medium uppercase tracking-[0.1em] text-ops-text-dim/80">
+        {blueprint.buyer}
       </p>
-      <h2 className="mt-1 text-xs font-semibold text-ops-text-secondary">{blueprint.title}</h2>
-      <p className="mt-1 text-[11px] leading-relaxed text-ops-text-dim">{blueprint.description}</p>
+      <h3 className="mt-1 text-[11px] font-medium text-ops-text-secondary">{blueprint.title}</h3>
+      <p className="mt-1 text-[10px] leading-relaxed text-ops-text-dim">{blueprint.description}</p>
+      {blueprint.emphasis && blueprint.emphasis.length > 0 ? (
+        <ul className="mt-2 flex flex-wrap gap-1">
+          {blueprint.emphasis.map((item) => (
+            <li
+              key={item}
+              className="rounded bg-ops-overlay/50 px-1.5 py-0.5 text-[9px] text-ops-text-dim ring-1 ring-ops-border-subtle/60"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <Link
         href={`/demo/login?blueprint=${blueprint.id}`}
         onClick={() => setActiveBlueprint(blueprint.id)}
-        className="mt-auto inline-flex w-full items-center justify-center rounded-lg border border-ops-border bg-ops-surface px-3 py-2 text-[10px] font-medium uppercase tracking-wide text-ops-text-secondary shadow-[var(--ops-shadow-sm)] transition hover:border-ops-text-dim/30 hover:text-ops-text"
+        className="mt-2.5 inline-flex min-h-9 items-center text-[10px] font-medium text-ops-text-dim transition hover:text-ops-text-secondary"
       >
-        Open module
+        Open module →
       </Link>
-    </Card>
+    </article>
   );
 }

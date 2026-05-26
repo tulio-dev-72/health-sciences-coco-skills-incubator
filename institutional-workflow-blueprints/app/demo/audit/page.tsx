@@ -3,7 +3,7 @@
 import { DemoTopBar } from "@/components/demo/top-bar";
 import { AuditTimeline } from "@/components/demo/audit-timeline";
 import { FireblocksSettlementPanel } from "@/components/demo/fireblocks-settlement-panel";
-import { WorkflowStepper } from "@/components/demo/workflow-stepper";
+import { ConnectedWorkflowStepper } from "@/components/demo/connected-workflow-stepper";
 import { Card, SectionHeader } from "@/components/ui/primitives";
 import { APP_TERMS } from "@/data/infrastructure-mapping";
 import { useAppStore } from "@/lib/store";
@@ -18,7 +18,7 @@ export default function AuditPage() {
         title={APP_TERMS.auditLogs}
         subtitle="Operational audit trail — initiation, policy, authorization, Fireblocks, and webhook events."
       />
-      <WorkflowStepper currentStep="audit" />
+      <ConnectedWorkflowStepper />
 
       <main className="space-y-3 px-3 py-3">
         {state.policySummary ? (

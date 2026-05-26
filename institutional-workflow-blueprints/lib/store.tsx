@@ -30,6 +30,16 @@ import {
   PRIMARY_DEMO_TIMES,
   PRIMARY_SETTLEMENT,
 } from "@/data/primary-scenario";
+import { isSupabasePersistenceEnabled } from "@/lib/supabase/persistence";
+import type { WorkflowSnapshot } from "@/lib/supabase/workflow/mappers";
+import {
+  apiApproveSettlement,
+  apiCreateSettlement,
+  apiRejectSettlement,
+  apiUpdateFireblocksStatus,
+  apiUpdatePolicy,
+  fetchWorkflowState,
+} from "@/lib/workflow/api-client";
 import type { WorkflowStepId } from "@/lib/workflow";
 import type {
   AppState,
@@ -56,6 +66,7 @@ type CreateTransferResult =
 
 type AppAction =
   | { type: "HYDRATE"; state: AppState }
+  | { type: "HYDRATE_FROM_SERVER"; snapshot: WorkflowSnapshot }
   | { type: "RESET_SESSION" }
   | { type: "SET_ROLE"; role: UserRole }
   | { type: "CLEAR_ROLE" }
@@ -180,16 +191,37 @@ function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case "HYDRATE":
       return action.state;
+    case "HYDRATE_FROM_SERVER":
+      return {
+        ...state,
+        transfers: action.snapshot.transfers,
+        auditLog: action.snapshot.auditLog,
+        policy: action.snapshot.policy,
+        lastTransferId: action.snapshot.lastTransferId,
+        workflowStep: action.snapshot.workflowStep,
+        policySummary: action.snapshot.policySummary,
+      };
     case "RESET_SESSION":
       clearPersistedState();
       return createEmptyState();
     case "SET_ROLE":
+      if (state.role === action.role) {
+        return state;
+      }
       return { ...state, role: action.role };
     case "CLEAR_ROLE":
+      if (
+        state.role === null &&
+        state.workflowStep === "create" &&
+        state.lastTransferId === null &&
+        state.policySummary === null
+      ) {
+        return state;
+      }
       return {
         ...state,
         role: null,
-        workflowStep: "blueprint",
+        workflowStep: "create",
         lastTransferId: null,
         policySummary: null,
       };
@@ -560,19 +592,21 @@ type AppContextValue = {
     fireblocksTxId?: string;
     status: string;
     subStatus?: string | null;
-  }) => void;
+  }) => Promise<void>;
   createTransfer: (
     input: CreateTransferInput,
     options?: { role?: UserRole },
-  ) => CreateTransferResult;
+  ) => Promise<CreateTransferResult>;
   approveTransfer: (
     transferId: string,
     fireblocks?: { fireblocksTxId: string; fireblocksStatus: string },
-  ) => boolean;
-  rejectTransfer: (transferId: string) => boolean;
-  updatePolicy: (policy: Partial<PolicySettings>) => void;
-  addWhitelistAddress: (address: string) => void;
-  removeWhitelistAddress: (address: string) => void;
+  ) => Promise<boolean>;
+  rejectTransfer: (transferId: string) => Promise<boolean>;
+  updatePolicy: (policy: Partial<PolicySettings>) => Promise<void>;
+  addWhitelistAddress: (address: string) => Promise<void>;
+  removeWhitelistAddress: (address: string) => Promise<void>;
+  hydrateFromServer: (snapshot: WorkflowSnapshot) => void;
+  refreshFromServer: () => Promise<void>;
   actorName: string;
 };
 
@@ -588,14 +622,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const sessionAuthedRef = useRef(false);
 
   useEffect(() => {
-    const saved = loadPersistedState();
-    const role = loadSessionRole() ?? saved?.role ?? null;
+    const role = loadSessionRole();
 
-    if (saved && !sessionAuthedRef.current) {
-      dispatch({
-        type: "HYDRATE",
-        state: role ? { ...saved, role } : saved,
-      });
+    if (!isSupabasePersistenceEnabled()) {
+      const saved = loadPersistedState();
+      const resolvedRole = role ?? saved?.role ?? null;
+
+      if (saved && !sessionAuthedRef.current) {
+        dispatch({
+          type: "HYDRATE",
+          state: resolvedRole ? { ...saved, role: resolvedRole } : saved,
+        });
+      } else if (resolvedRole && !sessionAuthedRef.current) {
+        dispatch({ type: "SET_ROLE", role: resolvedRole });
+      }
     } else if (role && !sessionAuthedRef.current) {
       dispatch({ type: "SET_ROLE", role });
     }
@@ -608,7 +648,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (sessionReady) {
+    if (sessionReady && !isSupabasePersistenceEnabled()) {
       persistState(state);
     }
   }, [state, sessionReady]);
@@ -639,9 +679,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "SET_FIREBLOCKS_ENABLED", enabled }),
       syncFireblocksVaults: (vaults) =>
         dispatch({ type: "SYNC_FIREBLOCKS_VAULTS", vaults }),
-      syncFireblocksTransferStatus: (input) =>
-        dispatch({ type: "UPDATE_FIREBLOCKS_STATUS", ...input }),
-      createTransfer: (input, options) => {
+      hydrateFromServer: (snapshot) => dispatch({ type: "HYDRATE_FROM_SERVER", snapshot }),
+      refreshFromServer: async () => {
+        if (!isSupabasePersistenceEnabled()) {
+          return;
+        }
+        const snapshot = await fetchWorkflowState();
+        dispatch({ type: "HYDRATE_FROM_SERVER", snapshot });
+      },
+      syncFireblocksTransferStatus: async (input) => {
+        if (isSupabasePersistenceEnabled()) {
+          await apiUpdateFireblocksStatus(input);
+          const snapshot = await fetchWorkflowState();
+          dispatch({ type: "HYDRATE_FROM_SERVER", snapshot });
+          return;
+        }
+        dispatch({ type: "UPDATE_FIREBLOCKS_STATUS", ...input });
+      },
+      createTransfer: async (input, options) => {
         const role = options?.role ?? resolveEffectiveRole(state);
         if (!role) {
           return { ok: false, error: "Select a role before creating a transfer." };
@@ -652,6 +707,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!input.destination.trim() || !input.reason.trim()) {
           return { ok: false, error: "Destination wallet and reason are required." };
         }
+
+        if (isSupabasePersistenceEnabled()) {
+          try {
+            const result = await apiCreateSettlement({
+              ...input,
+              blueprintId: state.activeBlueprint,
+            });
+            const snapshot = await fetchWorkflowState();
+            dispatch({ type: "HYDRATE_FROM_SERVER", snapshot });
+            return { ok: true, transferId: result.transfer.id };
+          } catch (error) {
+            return {
+              ok: false,
+              error: error instanceof Error ? error.message : "Unable to create settlement.",
+            };
+          }
+        }
+
         const available = getAvailableBalance(state, input.asset);
         if (input.amount > available) {
           return {
@@ -670,11 +743,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         return { ok: true, transferId };
       },
-      approveTransfer: (transferId, fireblocks) => {
+      approveTransfer: async (transferId, fireblocks) => {
         const role = resolveEffectiveRole(state);
         if (!role) return false;
         const transfer = state.transfers.find((item) => item.id === transferId);
         if (!transfer || transfer.status !== "PENDING_APPROVAL") return false;
+
+        if (isSupabasePersistenceEnabled()) {
+          try {
+            await apiApproveSettlement(transferId, fireblocks);
+            const snapshot = await fetchWorkflowState();
+            dispatch({ type: "HYDRATE_FROM_SERVER", snapshot });
+            return true;
+          } catch {
+            return false;
+          }
+        }
+
         dispatch({
           type: "APPROVE_TRANSFER",
           transferId,
@@ -685,11 +770,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         return true;
       },
-      rejectTransfer: (transferId) => {
+      rejectTransfer: async (transferId) => {
         const role = resolveEffectiveRole(state);
         if (!role) return false;
         const transfer = state.transfers.find((item) => item.id === transferId);
         if (!transfer || transfer.status !== "PENDING_APPROVAL") return false;
+
+        if (isSupabasePersistenceEnabled()) {
+          try {
+            await apiRejectSettlement(transferId);
+            const snapshot = await fetchWorkflowState();
+            dispatch({ type: "HYDRATE_FROM_SERVER", snapshot });
+            return true;
+          } catch {
+            return false;
+          }
+        }
+
         dispatch({
           type: "REJECT_TRANSFER",
           transferId,
@@ -698,9 +795,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         return true;
       },
-      updatePolicy: (policy) => {
+      updatePolicy: async (policy) => {
         const role = resolveEffectiveRole(state);
         if (!role) return;
+
+        if (isSupabasePersistenceEnabled()) {
+          await apiUpdatePolicy(policy);
+          const snapshot = await fetchWorkflowState();
+          dispatch({ type: "HYDRATE_FROM_SERVER", snapshot });
+          return;
+        }
+
         dispatch({
           type: "UPDATE_POLICY",
           policy,
@@ -708,9 +813,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
           role,
         });
       },
-      addWhitelistAddress: (address) => {
+      addWhitelistAddress: async (address) => {
         const role = resolveEffectiveRole(state);
         if (!role) return;
+
+        if (isSupabasePersistenceEnabled()) {
+          await apiUpdatePolicy({
+            whitelistedAddresses: [...state.policy.whitelistedAddresses, address.trim()],
+          });
+          const snapshot = await fetchWorkflowState();
+          dispatch({ type: "HYDRATE_FROM_SERVER", snapshot });
+          return;
+        }
+
         dispatch({
           type: "ADD_WHITELIST",
           address,
@@ -718,9 +833,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
           role,
         });
       },
-      removeWhitelistAddress: (address) => {
+      removeWhitelistAddress: async (address) => {
         const role = resolveEffectiveRole(state);
         if (!role) return;
+
+        if (isSupabasePersistenceEnabled()) {
+          await apiUpdatePolicy({
+            whitelistedAddresses: state.policy.whitelistedAddresses.filter(
+              (item) => item !== address,
+            ),
+          });
+          const snapshot = await fetchWorkflowState();
+          dispatch({ type: "HYDRATE_FROM_SERVER", snapshot });
+          return;
+        }
+
         dispatch({
           type: "REMOVE_WHITELIST",
           address,

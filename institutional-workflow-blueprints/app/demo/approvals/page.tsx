@@ -3,12 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DemoTopBar } from "@/components/demo/top-bar";
+import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
+import { ConnectedWorkflowStepper } from "@/components/demo/connected-workflow-stepper";
 import { FireblocksSettlementPanel } from "@/components/demo/fireblocks-settlement-panel";
 import { SettlementReviewCard } from "@/components/demo/settlement-review-card";
-import { WorkflowStepper } from "@/components/demo/workflow-stepper";
 import { Card, DangerButton, PrimaryButton, SecondaryButton, SectionHeader } from "@/components/ui/primitives";
 import { PRIMARY_SETTLEMENT, WEBHOOK_LIFECYCLE_STATUSES } from "@/data/primary-scenario";
-import { submitFireblocksTransfer } from "@/lib/fireblocks/api-client";
+import { submitAuthorizedFireblocksTransfer } from "@/lib/fireblocks/authorize-transfer";
 import { canApproveTransfers } from "@/lib/policy";
 import { useAppStore } from "@/lib/store";
 
@@ -37,12 +38,13 @@ export default function ApprovalsPage() {
 
   async function simulateWebhookLifecycle(transferId: string, fireblocksTxId: string) {
     setPhase("webhook");
+    setWorkflowStep("webhook");
     setWebhookStatuses([]);
 
     for (const status of WEBHOOK_LIFECYCLE_STATUSES) {
       await new Promise((resolve) => setTimeout(resolve, 1200));
       setWebhookStatuses((current) => [...current, status]);
-      syncFireblocksTransferStatus({
+      await syncFireblocksTransferStatus({
         externalTxId: transferId,
         fireblocksTxId,
         status,
@@ -58,33 +60,22 @@ export default function ApprovalsPage() {
     setBusyId(transferId);
     setActiveTransferId(transferId);
     setPhase("creating");
+    setWorkflowStep("custody");
 
     const transfer = state.transfers.find((item) => item.id === transferId);
     if (!transfer) return;
 
     try {
-      let fireblocksTxId: string = PRIMARY_SETTLEMENT.demoFireblocksTxId;
-
-      if (state.fireblocksEnabled) {
-        try {
-          const result = await submitFireblocksTransfer({
-            externalTxId: transfer.id,
-            asset: transfer.asset,
-            amount: transfer.amount,
-            destination: transfer.destination,
-            note: transfer.reason,
-          });
-          fireblocksTxId = result.fireblocksTxId;
-        } catch {
-          fireblocksTxId = PRIMARY_SETTLEMENT.demoFireblocksTxId;
-        }
-      }
+      const { fireblocksTxId, fireblocksStatus } = await submitAuthorizedFireblocksTransfer(
+        transfer,
+        state.fireblocksEnabled,
+      );
 
       await new Promise((resolve) => setTimeout(resolve, 1400));
       setPhase("created");
-      approveTransfer(transferId, {
+      await approveTransfer(transferId, {
         fireblocksTxId,
-        fireblocksStatus: "SUBMITTED",
+        fireblocksStatus,
       });
 
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -99,8 +90,8 @@ export default function ApprovalsPage() {
     }
   }
 
-  function handleReject(transferId: string) {
-    rejectTransfer(transferId);
+  async function handleReject(transferId: string) {
+    await rejectTransfer(transferId);
     setWorkflowStep("audit");
     router.push("/demo/audit");
   }
@@ -115,9 +106,11 @@ export default function ApprovalsPage() {
         title="Authorization Queue"
         subtitle="Treasury manager review before Fireblocks custody release."
       />
-      <WorkflowStepper currentStep="approval" />
+      <ConnectedWorkflowStepper />
 
       <main className="space-y-3 px-3 py-3">
+        {phase !== "idle" ? <MpcCustodyBoundaryPanel compact /> : null}
+
         {!canApprove ? (
           <Card variant="accent">
             <p className="text-xs font-medium text-ops-warning">
@@ -172,16 +165,17 @@ export default function ApprovalsPage() {
                     {canApprove ? (
                       <div className="grid gap-2">
                         <PrimaryButton
+                          className="w-full"
                           disabled={busyId === transfer.id}
                           onClick={() => handleAuthorize(transfer.id)}
                         >
                           {busyId === transfer.id ? "Authorizing…" : "Authorize Settlement"}
                         </PrimaryButton>
-                        <div className="grid grid-cols-2 gap-2">
-                          <DangerButton onClick={() => handleReject(transfer.id)}>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          <DangerButton className="w-full" onClick={() => handleReject(transfer.id)}>
                             Reject Settlement
                           </DangerButton>
-                          <SecondaryButton onClick={() => handleEscalate(transfer.id)}>
+                          <SecondaryButton className="w-full" onClick={() => handleEscalate(transfer.id)}>
                             Escalate Review
                           </SecondaryButton>
                         </div>

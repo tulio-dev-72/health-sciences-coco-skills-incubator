@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { isFireblocksConfigured } from "@/lib/fireblocks/config";
+
+import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
 import { fetchFireblocksVaultBalances } from "@/lib/fireblocks/service";
 
 export async function GET() {
-  if (!isFireblocksConfigured()) {
-    return NextResponse.json(
-      { error: "Fireblocks is not configured on the server." },
-      { status: 503 },
-    );
+  const unavailable = requireFireblocksConfigured();
+  if (unavailable) {
+    return unavailable;
   }
 
   try {
