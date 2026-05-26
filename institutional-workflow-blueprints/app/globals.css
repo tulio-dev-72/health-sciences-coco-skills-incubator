@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+:root {
+  /* Institutional fintech — warm light surfaces, deep navy type */
+  --ops-bg: #f6f7f9;
+  --ops-bg-gradient-top: #fafbfc;
+  --ops-bg-gradient-bottom: #eef1f6;
+  --ops-surface: #ffffff;
+  --ops-elevated: #ffffff;
+  --ops-overlay: #f1f4f8;
+  --ops-border: #dfe5ee;
+  --ops-border-subtle: #e9edf3;
+  --ops-text: #0f2744;
+  --ops-text-secondary: #5c6b7f;
+  --ops-text-dim: #8b97a8;
+
+  /* Navy primary actions — enterprise trust */
+  --ops-primary: #0f2744;
+  --ops-primary-hover: #0a1c33;
+  --ops-primary-muted: rgba(15, 39, 68, 0.06);
+
+  /* Muted orange — accent only */
+  --ops-accent: #d96b4a;
+  --ops-accent-hover: #c45a3a;
+  --ops-accent-muted: rgba(217, 107, 74, 0.1);
+
+  --ops-success: #0d7a5f;
+  --ops-success-muted: rgba(13, 122, 95, 0.08);
+  --ops-warning: #b7791f;
+  --ops-warning-muted: rgba(183, 121, 31, 0.1);
+  --ops-danger: #c0392b;
+  --ops-danger-muted: rgba(192, 57, 43, 0.08);
+  --ops-info: #2563eb;
+  --ops-info-muted: rgba(37, 99, 235, 0.08);
+
+  --ops-shadow-sm: 0 1px 2px rgba(15, 39, 68, 0.04), 0 1px 3px rgba(15, 39, 68, 0.06);
+  --ops-shadow-md: 0 4px 12px rgba(15, 39, 68, 0.06), 0 2px 4px rgba(15, 39, 68, 0.04);
+  --ops-shadow-lg: 0 12px 32px rgba(15, 39, 68, 0.08), 0 4px 8px rgba(15, 39, 68, 0.04);
+
+  /* Legacy aliases */
+  --fb-black: var(--ops-text);
+  --fb-dark: var(--ops-primary);
+  --fb-surface: var(--ops-surface);
+  --fb-surface-elevated: var(--ops-elevated);
+  --fb-border: var(--ops-border);
+  --fb-orange: var(--ops-accent);
+  --fb-orange-hover: var(--ops-accent-hover);
+  --fb-orange-muted: var(--ops-accent-muted);
+  --fb-muted: var(--ops-text-secondary);
+  --fb-muted-light: var(--ops-text-dim);
+  --background: var(--ops-bg);
+  --foreground: var(--ops-text);
+}
+
+@theme inline {
+  --color-ops-bg: var(--ops-bg);
+  --color-ops-surface: var(--ops-surface);
+  --color-ops-elevated: var(--ops-elevated);
+  --color-ops-overlay: var(--ops-overlay);
+  --color-ops-border: var(--ops-border);
+  --color-ops-border-subtle: var(--ops-border-subtle);
+  --color-ops-text: var(--ops-text);
+  --color-ops-text-secondary: var(--ops-text-secondary);
+  --color-ops-text-dim: var(--ops-text-dim);
+  --color-ops-primary: var(--ops-primary);
+  --color-ops-primary-hover: var(--ops-primary-hover);
+  --color-ops-primary-muted: var(--ops-primary-muted);
+  --color-ops-accent: var(--ops-accent);
+  --color-ops-accent-hover: var(--ops-accent-hover);
+  --color-ops-accent-muted: var(--ops-accent-muted);
+  --color-ops-success: var(--ops-success);
+  --color-ops-success-muted: var(--ops-success-muted);
+  --color-ops-warning: var(--ops-warning);
+  --color-ops-warning-muted: var(--ops-warning-muted);
+  --color-ops-danger: var(--ops-danger);
+  --color-ops-danger-muted: var(--ops-danger-muted);
+  --color-ops-info: var(--ops-info);
+  --color-ops-info-muted: var(--ops-info-muted);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-fb-black: var(--fb-black);
+  --color-fb-dark: var(--fb-dark);
+  --color-fb-surface: var(--fb-surface);
+  --color-fb-surface-elevated: var(--fb-surface-elevated);
+  --color-fb-border: var(--fb-border);
+  --color-fb-orange: var(--fb-orange);
+  --color-fb-orange-hover: var(--fb-orange-hover);
+  --color-fb-orange-muted: var(--fb-orange-muted);
+  --color-fb-muted: var(--fb-muted);
+  --color-fb-muted-light: var(--fb-muted-light);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: linear-gradient(
+    180deg,
+    var(--ops-bg-gradient-top) 0%,
+    var(--ops-bg-gradient-bottom) 100%
+  );
+  background-attachment: fixed;
+  color: var(--ops-text);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--ops-primary-muted);
+  color: var(--ops-text);
+}
