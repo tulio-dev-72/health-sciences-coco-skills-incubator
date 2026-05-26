@@ -24,7 +24,7 @@ export function BlueprintLibraryCard({
     return (
       <Card
         variant="accent"
-        className="flex h-full flex-col ring-1 ring-ops-primary/10"
+        className="flex h-full flex-col shadow-[var(--ops-shadow-md)] ring-1 ring-ops-primary/15"
       >
         <span className="mb-2 inline-flex w-fit rounded-md bg-ops-primary-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-ops-primary">
           Primary operational scenario
@@ -59,29 +59,29 @@ export function BlueprintLibraryCard({
   }
 
   return (
-    <article className="rounded-lg border border-ops-border-subtle/70 bg-ops-surface/40 px-3 py-2.5">
-      <p className="text-[9px] leading-snug text-ops-text-dim">{SECONDARY_INFRA_LABEL}</p>
-      <p className="mt-1.5 text-[9px] font-medium uppercase tracking-[0.1em] text-ops-text-dim/80">
-        {blueprint.buyer}
-      </p>
-      <h3 className="mt-1 text-[11px] font-medium text-ops-text-secondary">{blueprint.title}</h3>
-      <p className="mt-1 text-[10px] leading-relaxed text-ops-text-dim">{blueprint.description}</p>
+    <article className="rounded-md border border-ops-border-subtle/50 px-2.5 py-2">
+      <p className="text-[8px] leading-snug text-ops-text-dim/75">{SECONDARY_INFRA_LABEL}</p>
+      <h3 className="mt-1 text-[10px] font-medium text-ops-text-secondary/90">{blueprint.title}</h3>
       {blueprint.emphasis && blueprint.emphasis.length > 0 ? (
-        <ul className="mt-2 flex flex-wrap gap-1">
+        <ul className="mt-1.5 flex flex-wrap gap-1">
           {blueprint.emphasis.map((item) => (
             <li
               key={item}
-              className="rounded bg-ops-overlay/50 px-1.5 py-0.5 text-[9px] text-ops-text-dim ring-1 ring-ops-border-subtle/60"
+              className="rounded-sm bg-ops-overlay/30 px-1.5 py-px text-[8px] text-ops-text-dim/80"
             >
               {item}
             </li>
           ))}
         </ul>
-      ) : null}
+      ) : (
+        <p className="mt-1 line-clamp-2 text-[9px] leading-snug text-ops-text-dim/80">
+          {blueprint.description}
+        </p>
+      )}
       <Link
         href={`/demo/login?blueprint=${blueprint.id}`}
         onClick={() => setActiveBlueprint(blueprint.id)}
-        className="mt-2.5 inline-flex min-h-9 items-center text-[10px] font-medium text-ops-text-dim transition hover:text-ops-text-secondary"
+        className="mt-1.5 inline-block text-[9px] text-ops-text-dim/70 transition hover:text-ops-text-secondary"
       >
         Open module →
       </Link>

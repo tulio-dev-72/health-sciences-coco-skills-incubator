@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Suspense, useCallback, useState } from "react";
 import { BlueprintLibraryCard } from "@/components/blueprint-library-card";
+import { SecondaryModulesSection } from "@/components/home/secondary-modules-section";
 import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
 import { DemoWorkflowGuide } from "@/components/home/demo-workflow-guide";
 import { PrimarySettlementWorkflow } from "@/components/home/primary-settlement-workflow";
@@ -116,7 +117,7 @@ function HomePageInner() {
               subtitle="Workflow Layer → Fireblocks MPC Custody Layer → Blockchain Settlement Rail. This app orchestrates enterprise workflow — Fireblocks provides MPC-secured custody and signing."
             />
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
               {primaryBlueprint ? (
                 <BlueprintLibraryCard
                   blueprint={primaryBlueprint}
@@ -125,28 +126,7 @@ function HomePageInner() {
                 />
               ) : null}
 
-              <aside className="rounded-xl border border-ops-border-subtle/80 bg-ops-overlay/15 p-3 sm:p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-dim">
-                  Secondary modules
-                </p>
-                <p className="mt-1.5 text-[11px] leading-relaxed text-ops-text-dim">
-                  Additional operational workflow patterns built on the same Fireblocks infrastructure
-                  model.
-                </p>
-                <div className="mt-3 grid gap-2">
-                  {secondaryBlueprints.map((blueprint) => (
-                    <BlueprintLibraryCard
-                      key={blueprint.id}
-                      blueprint={blueprint}
-                      variant="secondary"
-                    />
-                  ))}
-                </div>
-                <p className="mt-3 border-t border-ops-border-subtle/80 pt-3 text-[10px] leading-relaxed text-ops-text-dim">
-                  All workflows share the same architecture: Workflow orchestration → Fireblocks MPC
-                  custody/signing → blockchain settlement rails.
-                </p>
-              </aside>
+              <SecondaryModulesSection blueprints={secondaryBlueprints} />
             </div>
 
             <div className="mt-8 space-y-4 border-t border-ops-border-subtle pt-8">
