@@ -1,6 +1,5 @@
 import { Card, SectionHeader } from "@/components/ui/primitives";
 import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
-import { DEMO_SANDBOX_LABEL } from "@/data/demo-accounts";
 import { SETTLEMENT_LIFECYCLE_STEPS } from "@/data/settlement-lifecycle";
 
 export function DemoWorkflowGuide() {
@@ -8,15 +7,10 @@ export function DemoWorkflowGuide() {
     <>
       <Card variant="elevated" className="mb-0">
         <SectionHeader
-          label="End-to-end demo"
-          title="Settlement lifecycle"
-          subtitle="This app orchestrates enterprise workflow around the Fireblocks MPC custody layer."
+          label="Workflow lifecycle"
+          title="Settlement authorization flow"
+          subtitle="Enterprise workflow orchestration across policy, authorization, custody, and settlement rails."
         />
-
-        <p className="mb-4 rounded-lg border border-ops-border-subtle bg-ops-overlay/40 px-3 py-2 text-[11px] text-ops-text-secondary">
-          {DEMO_SANDBOX_LABEL} Sign in with Demo Accounts, run as Analyst, then switch to Treasury
-          Manager for authorization.
-        </p>
 
         <ol className="space-y-3">
           {SETTLEMENT_LIFECYCLE_STEPS.map((item) => (

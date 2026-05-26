@@ -52,9 +52,9 @@ export function PendingApprovalBadge() {
 
 export function RoleBadge({ role }: { role: UserRole }) {
   const labels: Record<UserRole, string> = {
-    analyst: "Analyst",
-    treasury_manager: "Treasury Mgr",
-    admin: "Admin",
+    analyst: "Treasury Analyst",
+    treasury_manager: "Treasury Manager",
+    admin: "Platform Admin",
   };
 
   return (
@@ -101,7 +101,7 @@ export function IntegrationStatusBadge({
           : "bg-ops-overlay text-ops-text-secondary ring-1 ring-ops-border"
       }`}
     >
-      {status === "connected" ? "Connected" : "Offline"}
+      {status === "connected" ? "Fireblocks Live" : "Offline"}
     </span>
   );
 }

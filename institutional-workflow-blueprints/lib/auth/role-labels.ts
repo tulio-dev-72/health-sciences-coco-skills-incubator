@@ -3,11 +3,11 @@ import type { UserRole } from "@/lib/types";
 export function getRoleLabel(role: string): string {
   switch (role) {
     case "analyst":
-      return "Analyst";
+      return "Treasury Analyst";
     case "treasury_manager":
       return "Treasury Manager";
     case "admin":
-      return "Admin";
+      return "Platform Admin";
     default:
       return "Account";
   }

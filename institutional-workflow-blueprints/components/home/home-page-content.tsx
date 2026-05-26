@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Suspense, useCallback, useState } from "react";
+import { LaunchOperationalSandbox } from "@/components/auth/launch-operational-sandbox";
 import { BlueprintLibraryCard } from "@/components/blueprint-library-card";
 import { SecondaryModulesSection } from "@/components/home/secondary-modules-section";
 import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
@@ -10,7 +11,6 @@ import { PrimarySettlementWorkflow } from "@/components/home/primary-settlement-
 import { AppHeader } from "@/components/layout/app-header";
 import { SectionHeader, PrimaryButton } from "@/components/ui/primitives";
 import { blueprintLibrary } from "@/data/initial-data";
-import { productPitch } from "@/data/demo-guide";
 import { PRIMARY_BLUEPRINT_ID } from "@/data/primary-scenario";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useAppStore } from "@/lib/store";
@@ -86,10 +86,11 @@ function HomePageInner() {
     profile?.role,
   ]);
 
+  const isAuthenticated = isSupabaseAuth ? Boolean(user) : Boolean(effectiveRole);
+
   return (
     <div className="min-h-screen bg-ops-bg text-ops-text">
       <AppHeader
-        subtitle={productPitch.subline}
         onSignOut={() => setWorkflowActive(false)}
         actions={
           !workflowActive ? (
@@ -130,8 +131,12 @@ function HomePageInner() {
             </div>
 
             <div className="mt-8 space-y-4 border-t border-ops-border-subtle pt-8">
+              {!isAuthenticated && !workflowActive ? (
+                <LaunchOperationalSandbox nextPath="/" />
+              ) : null}
+
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-dim">
-                How the demo works
+                Infrastructure reference
               </p>
               <InfrastructureMappingCard compact />
               <DemoWorkflowGuide />

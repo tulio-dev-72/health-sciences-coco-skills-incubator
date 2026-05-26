@@ -10,6 +10,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
+import { getRoleLabel as formatRoleLabel } from "@/lib/auth/role-labels";
 import {
   createEmptyState,
   loadPersistedState,
@@ -99,14 +100,7 @@ function createId(prefix: string): string {
 }
 
 function roleLabel(role: UserRole): string {
-  switch (role) {
-    case "analyst":
-      return "Analyst";
-    case "treasury_manager":
-      return "Treasury Manager";
-    case "admin":
-      return "Admin";
-  }
+  return formatRoleLabel(role);
 }
 
 function appendAudit(
