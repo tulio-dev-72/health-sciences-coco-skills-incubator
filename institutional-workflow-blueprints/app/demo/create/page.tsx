@@ -75,7 +75,7 @@ export default function CreateTransferPage() {
       />
       <ConnectedWorkflowStepper />
 
-      <main className="space-y-3 px-3 py-3">
+      <main className="ops-page">
         <form onSubmit={handleSubmit} className="space-y-3">
           <FundTreasuryMainPanel />
           <FireblocksSettlementInfrastructure treasury={treasury} amount={settlementAmount} />

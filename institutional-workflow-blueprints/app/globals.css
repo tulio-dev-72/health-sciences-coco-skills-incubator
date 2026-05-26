@@ -1,41 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  /* Institutional fintech — warm light surfaces, deep navy type */
-  --ops-bg: #eef1f5;
-  --ops-bg-gradient-top: #f4f6f9;
-  --ops-bg-gradient-bottom: #e6eaf0;
+  /* Enterprise treasury — high-contrast light surfaces, deep operational type */
+  --ops-bg: #e2e8ef;
+  --ops-bg-gradient-top: #eaedf3;
+  --ops-bg-gradient-bottom: #d8dee8;
   --ops-surface: #ffffff;
   --ops-elevated: #ffffff;
-  --ops-overlay: #e8edf3;
-  --ops-border: #c5ced9;
-  --ops-border-subtle: #d4dbe4;
-  --ops-text: #081a30;
-  --ops-text-secondary: #334155;
-  --ops-text-dim: #526277;
+  --ops-overlay: #d4dce6;
+  --ops-border: #9aaaba;
+  --ops-border-subtle: #b0bcc9;
+  --ops-text: #041018;
+  --ops-text-secondary: #1a2b3d;
+  --ops-text-dim: #3d5066;
 
-  /* Navy primary actions — enterprise trust */
-  --ops-primary: #0a1f38;
-  --ops-primary-hover: #061528;
-  --ops-primary-muted: rgba(10, 31, 56, 0.08);
+  /* Navy primary actions — strong visibility for live ops */
+  --ops-primary: #061525;
+  --ops-primary-hover: #020a12;
+  --ops-primary-muted: rgba(6, 21, 37, 0.11);
 
   /* Muted orange — accent only */
-  --ops-accent: #c85a3a;
-  --ops-accent-hover: #b34a2e;
-  --ops-accent-muted: rgba(200, 90, 58, 0.12);
+  --ops-accent: #b84a2c;
+  --ops-accent-hover: #9f3d24;
+  --ops-accent-muted: rgba(184, 74, 44, 0.14);
 
-  --ops-success: #0a6b52;
-  --ops-success-muted: rgba(10, 107, 82, 0.1);
-  --ops-warning: #9a6512;
-  --ops-warning-muted: rgba(154, 101, 18, 0.12);
-  --ops-danger: #a83226;
-  --ops-danger-muted: rgba(168, 50, 38, 0.1);
-  --ops-info: #1d4ed8;
-  --ops-info-muted: rgba(29, 78, 216, 0.1);
+  --ops-success: #065f46;
+  --ops-success-muted: rgba(6, 95, 70, 0.14);
+  --ops-warning: #8a550f;
+  --ops-warning-muted: rgba(138, 85, 15, 0.16);
+  --ops-danger: #991b1b;
+  --ops-danger-muted: rgba(153, 27, 27, 0.12);
+  --ops-info: #1e40af;
+  --ops-info-muted: rgba(30, 64, 175, 0.12);
 
-  --ops-shadow-sm: 0 1px 2px rgba(8, 26, 48, 0.06), 0 1px 3px rgba(8, 26, 48, 0.08);
-  --ops-shadow-md: 0 4px 14px rgba(8, 26, 48, 0.08), 0 2px 4px rgba(8, 26, 48, 0.05);
-  --ops-shadow-lg: 0 12px 32px rgba(8, 26, 48, 0.1), 0 4px 8px rgba(8, 26, 48, 0.06);
+  --ops-shadow-sm: 0 1px 2px rgba(4, 16, 24, 0.08), 0 1px 3px rgba(4, 16, 24, 0.1);
+  --ops-shadow-md: 0 4px 16px rgba(4, 16, 24, 0.1), 0 2px 4px rgba(4, 16, 24, 0.07);
+  --ops-shadow-lg: 0 14px 36px rgba(4, 16, 24, 0.12), 0 4px 10px rgba(4, 16, 24, 0.08);
 
   /* Legacy aliases */
   --fb-black: var(--ops-text);
@@ -123,4 +123,27 @@ body {
 ::selection {
   background: var(--ops-primary-muted);
   color: var(--ops-text);
+}
+
+/* Shared layout rhythm for operational review screens */
+.ops-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .ops-page {
+    gap: 1.5rem;
+    padding: 1.25rem;
+  }
+}
+
+/* Inset data panels inside cards — solid surface, not washed-out gray wash */
+.ops-inset {
+  border: 1px solid var(--ops-border-subtle);
+  border-radius: 0.625rem;
+  background: var(--ops-surface);
+  box-shadow: var(--ops-shadow-sm);
 }

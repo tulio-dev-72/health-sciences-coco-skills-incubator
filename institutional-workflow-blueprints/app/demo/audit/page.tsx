@@ -20,7 +20,7 @@ export default function AuditPage() {
       />
       <ConnectedWorkflowStepper />
 
-      <main className="space-y-3 px-3 py-3">
+      <main className="ops-page">
         {state.policySummary ? (
           <Card variant="accent" className="mb-1">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-ops-text-dim">

@@ -32,7 +32,7 @@ export default function DemoDashboardPage() {
         subtitle="Vault accounts, transaction authorization queue, and policy exceptions."
       />
 
-      <main className="space-y-3 px-3 py-3">
+      <main className="ops-page">
         <OpsCommandCard />
         <UseCaseContextCard />
 

@@ -26,8 +26,8 @@ export function OpsCommandCard() {
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ops-primary">
             Operations command
           </p>
-          <h2 className="mt-1 text-sm font-semibold text-ops-text">{scenario.headline}</h2>
-          <p className="mt-1 text-xs leading-relaxed text-ops-text-secondary">
+          <h2 className="mt-1 text-base font-semibold leading-snug text-ops-text">{scenario.headline}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-ops-text-secondary">
             {scenario.queueSummary}
           </p>
         </div>
@@ -42,8 +42,8 @@ export function OpsCommandCard() {
 
       <p className="mt-2 font-mono text-[10px] text-ops-text-dim">{scenario.batchLabel}</p>
 
-      <div className="mt-3 rounded-lg border border-ops-border-subtle bg-ops-overlay/40 px-2.5 py-2 text-xs text-ops-text-secondary">
-        <span className="text-ops-text-dim">Session</span>{" "}
+      <div className="mt-4 rounded-lg border border-ops-border-subtle bg-ops-surface px-3 py-2.5 text-sm text-ops-text-secondary shadow-[var(--ops-shadow-sm)]">
+        <span className="font-semibold text-ops-text-dim">Session</span>{" "}
         {effectiveRole ? getRoleLabel(effectiveRole) : "Unauthenticated"}
         {effectiveRole === "analyst" && " · submit only"}
         {effectiveRole === "treasury_manager" && " · approve queue"}

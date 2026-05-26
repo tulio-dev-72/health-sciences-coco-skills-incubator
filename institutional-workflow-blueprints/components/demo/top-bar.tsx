@@ -37,25 +37,25 @@ export function DemoTopBar({
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-ops-border bg-ops-surface/95 shadow-[var(--ops-shadow-sm)] backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-ops-border bg-ops-surface shadow-[var(--ops-shadow-md)] backdrop-blur-md">
       <div
         className={`mx-auto flex ${shellMaxWidth} flex-col gap-3 px-3 py-3 sm:flex-row sm:items-start sm:justify-between`}
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ops-text-secondary">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ops-text-dim">
               Treasury Control Center
             </p>
             <LiveBadge live={connected} />
           </div>
-          <h1 className="mt-0.5 text-base font-semibold text-ops-text">{title}</h1>
+          <h1 className="mt-1 text-lg font-semibold tracking-tight text-ops-text">{title}</h1>
           {subtitle ? (
-            <p className="mt-0.5 text-xs leading-relaxed text-ops-text-secondary">{subtitle}</p>
+            <p className="mt-1 text-sm leading-relaxed text-ops-text-secondary">{subtitle}</p>
           ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 sm:flex-col sm:items-end sm:text-right">
           {displayRole ? <RoleBadge role={displayRole} /> : null}
-          <p className="text-[10px] text-ops-text-dim">{displayName}</p>
+          <p className="text-[11px] font-medium text-ops-text-secondary">{displayName}</p>
           <div className="flex gap-3 sm:flex-col sm:gap-1">
             <button
               type="button"

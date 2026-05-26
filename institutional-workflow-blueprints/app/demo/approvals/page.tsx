@@ -167,7 +167,7 @@ export default function ApprovalsPage() {
       />
       <ConnectedWorkflowStepper />
 
-      <main className="space-y-3 px-3 py-3">
+      <main className="ops-page">
         {phase !== "idle" ? <MpcCustodyBoundaryPanel compact /> : null}
 
         {!canApprove ? (

@@ -3,20 +3,20 @@ import { getFireblocksStatusLabel, normalizeFireblocksStatus } from "@/lib/fireb
 
 const statusStyles: Record<TransferStatus, string> = {
   CREATED: "bg-ops-overlay text-ops-text-secondary ring-1 ring-ops-border",
-  PENDING_APPROVAL: "bg-ops-warning-muted text-ops-warning ring-1 ring-ops-warning/20",
-  APPROVED: "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/20",
-  REJECTED: "bg-ops-danger-muted text-ops-danger ring-1 ring-ops-danger/20",
-  SETTLED: "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/20",
+  PENDING_APPROVAL: "bg-ops-warning-muted text-ops-warning ring-1 ring-ops-warning/30",
+  APPROVED: "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/30",
+  REJECTED: "bg-ops-danger-muted text-ops-danger ring-1 ring-ops-danger/30",
+  SETTLED: "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/30",
 };
 
 const riskStyles: Record<RiskLevel, string> = {
-  low: "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/20",
-  medium: "bg-ops-warning-muted text-ops-warning ring-1 ring-ops-warning/20",
-  high: "bg-ops-danger-muted text-ops-danger ring-1 ring-ops-danger/20",
+  low: "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/30",
+  medium: "bg-ops-warning-muted text-ops-warning ring-1 ring-ops-warning/30",
+  high: "bg-ops-danger-muted text-ops-danger ring-1 ring-ops-danger/30",
 };
 
 const badgeBase =
-  "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em]";
+  "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.07em]";
 
 export function StatusBadge({ status }: { status: TransferStatus }) {
   const label =
@@ -39,7 +39,7 @@ export function RiskBadge({ level }: { level: RiskLevel }) {
 
 export function ApprovedBadge() {
   return (
-    <span className={`${badgeBase} bg-ops-success-muted text-ops-success ring-1 ring-ops-success/20`}>
+    <span className={`${badgeBase} bg-ops-success-muted text-ops-success ring-1 ring-ops-success/30`}>
       Approved
     </span>
   );
@@ -47,7 +47,7 @@ export function ApprovedBadge() {
 
 export function PendingApprovalBadge() {
   return (
-    <span className={`${badgeBase} bg-ops-warning-muted text-ops-warning ring-1 ring-ops-warning/20`}>
+    <span className={`${badgeBase} bg-ops-warning-muted text-ops-warning ring-1 ring-ops-warning/30`}>
       Awaiting authorization
     </span>
   );
@@ -61,7 +61,7 @@ export function RoleBadge({ role }: { role: UserRole }) {
   };
 
   return (
-    <span className={`${badgeBase} bg-ops-primary-muted text-ops-primary ring-1 ring-ops-primary/15`}>
+    <span className={`${badgeBase} bg-ops-primary-muted text-ops-primary ring-1 ring-ops-primary/25`}>
       {labels[role]}
     </span>
   );
@@ -71,7 +71,7 @@ export function CountBadge({ count }: { count: number }) {
   if (count <= 0) return null;
 
   return (
-    <span className="inline-flex min-w-[1.125rem] items-center justify-center rounded-md bg-ops-accent px-1 py-px text-[9px] font-bold text-white">
+    <span className="inline-flex min-w-[1.125rem] items-center justify-center rounded-md bg-ops-accent px-1 py-px text-[9px] font-bold text-white shadow-[var(--ops-shadow-sm)]">
       {count}
     </span>
   );
@@ -82,7 +82,7 @@ export function LiveBadge({ live }: { live: boolean }) {
     <span
       className={`${badgeBase} ${
         live
-          ? "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/20"
+          ? "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/30"
           : "bg-ops-overlay text-ops-text-secondary ring-1 ring-ops-border"
       }`}
     >
@@ -100,7 +100,7 @@ export function IntegrationStatusBadge({
     <span
       className={`${badgeBase} ${
         status === "connected"
-          ? "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/20"
+          ? "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/30"
           : "bg-ops-overlay text-ops-text-secondary ring-1 ring-ops-border"
       }`}
     >
@@ -112,7 +112,7 @@ export function IntegrationStatusBadge({
 export function PrototypeModeBadge() {
   return (
     <span
-      className={`${badgeBase} bg-ops-warning-muted text-ops-warning ring-1 ring-ops-warning/20`}
+      className={`${badgeBase} bg-ops-warning-muted text-ops-warning ring-1 ring-ops-warning/30`}
     >
       Sandbox mode
     </span>
@@ -124,14 +124,14 @@ export function FireblocksStatusBadge({ status }: { status: string }) {
   const label = getFireblocksStatusLabel(status);
   const style =
     normalized === "COMPLETED"
-      ? "bg-ops-success-muted text-ops-success ring-ops-success/20"
+      ? "bg-ops-success-muted text-ops-success ring-ops-success/30"
       : normalized === "FAILED" ||
           normalized === "REJECTED" ||
           normalized === "CANCELLED"
-        ? "bg-ops-danger-muted text-ops-danger ring-ops-danger/20"
+        ? "bg-ops-danger-muted text-ops-danger ring-ops-danger/30"
         : normalized === "CONFIRMING"
-          ? "bg-ops-info-muted text-ops-info ring-ops-info/20"
-          : "bg-ops-warning-muted text-ops-warning ring-ops-warning/20";
+          ? "bg-ops-info-muted text-ops-info ring-ops-info/30"
+          : "bg-ops-warning-muted text-ops-warning ring-ops-warning/30";
 
   return <span className={`${badgeBase} ring-1 ${style}`}>{label}</span>;
 }

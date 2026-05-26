@@ -76,7 +76,7 @@ export default function SettingsPage() {
         subtitle="Business rules in this app. Fireblocks TAP governs custody policy."
       />
 
-      <main className="space-y-3 px-3 py-3">
+      <main className="ops-page">
         <Card variant="elevated">
           <SectionHeader
             label="Governance"

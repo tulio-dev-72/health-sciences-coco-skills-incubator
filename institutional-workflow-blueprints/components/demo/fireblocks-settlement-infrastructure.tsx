@@ -63,7 +63,7 @@ export function FireblocksSettlementInfrastructure({
       : null;
 
   return (
-    <Card variant="ghost" className="border-ops-border-subtle bg-ops-overlay/30">
+    <Card variant="ghost" className="border-ops-border bg-ops-surface ring-1 ring-ops-primary/[0.05]">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <SectionHeader
@@ -91,7 +91,7 @@ export function FireblocksSettlementInfrastructure({
             </p>
           ) : null}
 
-          <div className="grid gap-2 rounded-lg border border-ops-border-subtle bg-ops-surface/80 px-2.5 py-2 font-mono text-[10px] break-all text-ops-text-secondary">
+          <div className="grid gap-2 rounded-lg border border-ops-border-subtle bg-ops-surface px-3 py-2.5 font-mono text-[11px] break-all text-ops-text-secondary shadow-[var(--ops-shadow-sm)]">
             <p>
               <span className="text-ops-text-dim">vault</span> {state.vault?.name} · id{" "}
               {state.vault?.id}

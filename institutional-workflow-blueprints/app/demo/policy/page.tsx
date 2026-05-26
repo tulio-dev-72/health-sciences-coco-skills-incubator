@@ -40,7 +40,7 @@ export default function PolicyCheckPage() {
       />
       <ConnectedWorkflowStepper />
 
-      <main className="space-y-3 px-3 py-3">
+      <main className="ops-page">
         <PolicyEvaluationCard transfer={transfer} />
 
         {transfer.requiresApproval ? (
