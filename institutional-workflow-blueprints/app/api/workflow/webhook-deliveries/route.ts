@@ -1,22 +1,28 @@
 import { NextResponse } from "next/server";
 import {
   getWebhookEndpointOrigin,
-  handleFireblocksWebhookEvent,
   listFireblocksWebhookDeliveries,
 } from "@/lib/fireblocks/webhook-events";
-import { assertRole, requireWorkflowUser } from "@/lib/supabase/workflow/auth";
+import {
+  assertRole,
+  requirePersistedWorkflowUser,
+} from "@/lib/supabase/workflow/auth";
 
 export const runtime = "nodejs";
 
 /** Admin-only recent webhook delivery log for integration screen. */
 export async function GET(request: Request) {
   try {
-    const auth = await requireWorkflowUser();
+    const auth = await requirePersistedWorkflowUser();
     if ("error" in auth) {
       return auth.error;
     }
 
-    const roleError = assertRole(auth.role, ["admin"]);
+    const roleError = assertRole(
+      auth.role,
+      ["admin"],
+      "Fireblocks webhook delivery logs are limited to Platform Admin.",
+    );
     if (roleError) {
       return roleError;
     }

@@ -1,17 +1,35 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useAuth } from "@/components/auth/auth-provider";
+import { isUserRole } from "@/lib/auth/role-labels";
+import { isSupabasePersistenceEnabled } from "@/lib/supabase/persistence";
 import { loadSessionRole } from "@/lib/storage";
 import { useAppStore } from "@/lib/store";
 import type { UserRole } from "@/lib/types";
 
-/** Keep app store aligned with the active sandbox session cookie — not Supabase profile role. */
+/** Keep app store aligned with Supabase profile role or sandbox session cookie. */
 export function AuthStoreSync() {
+  const { isSupabaseAuth, profile } = useAuth();
   const { setRole, clearRole, sessionReady, effectiveRole } = useAppStore();
   const lastSyncedRef = useRef<UserRole | "cleared" | null>(null);
 
   useEffect(() => {
     if (!sessionReady) {
+      return;
+    }
+
+    if (isSupabaseAuth && isSupabasePersistenceEnabled()) {
+      const profileRole = profile?.role;
+      if (profileRole && isUserRole(profileRole)) {
+        if (lastSyncedRef.current === profileRole) {
+          return;
+        }
+        lastSyncedRef.current = profileRole;
+        if (effectiveRole !== profileRole) {
+          setRole(profileRole);
+        }
+      }
       return;
     }
 
@@ -35,7 +53,7 @@ export function AuthStoreSync() {
     if (effectiveRole !== null) {
       clearRole();
     }
-  }, [sessionReady, effectiveRole, setRole, clearRole]);
+  }, [sessionReady, isSupabaseAuth, profile?.role, effectiveRole, setRole, clearRole]);
 
   return null;
 }

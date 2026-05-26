@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
-import { assertRole, requireWorkflowUser } from "@/lib/supabase/workflow/auth";
+import {
+  assertRole,
+  requirePersistedWorkflowUser,
+} from "@/lib/supabase/workflow/auth";
 import { updatePolicySettings } from "@/lib/supabase/workflow/service";
 
 export async function PATCH(request: Request) {
   try {
-    const auth = await requireWorkflowUser();
+    const auth = await requirePersistedWorkflowUser();
     if ("error" in auth) {
       return auth.error;
     }
 
-    const roleError = assertRole(auth.role, ["admin"]);
+    const roleError = assertRole(
+      auth.role,
+      ["admin"],
+      "Only Platform Admin can manage enterprise workflow policies.",
+    );
     if (roleError) {
       return roleError;
     }

@@ -24,6 +24,12 @@ import {
 } from "@/lib/storage";
 import { formatCurrency } from "@/lib/format";
 import { evaluateTransferPolicy, normalizeAddress } from "@/lib/policy";
+import {
+  canApproveTransfers,
+  canCreateSettlements,
+  canManagePolicy,
+  canRejectTransfers,
+} from "@/lib/auth/permissions";
 import { AUDIT_ACTIONS } from "@/lib/audit";
 import {
   auditActorForStatusSource,
@@ -719,6 +725,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!role) {
           return { ok: false, error: "Select a role before creating a transfer." };
         }
+        if (!canCreateSettlements(role)) {
+          return { ok: false, error: "Only Treasury Analyst can create settlement requests." };
+        }
         if (input.amount <= 0) {
           return { ok: false, error: "Amount must be greater than zero." };
         }
@@ -757,7 +766,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       approveTransfer: async (transferId, fireblocks) => {
         const role = resolveEffectiveRole(state);
-        if (!role) return false;
+        if (!role || !canApproveTransfers(role)) return false;
         const transfer = state.transfers.find((item) => item.id === transferId);
         if (!transfer || transfer.status !== "PENDING_APPROVAL") return false;
 
@@ -784,7 +793,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       rejectTransfer: async (transferId) => {
         const role = resolveEffectiveRole(state);
-        if (!role) return false;
+        if (!role || !canRejectTransfers(role)) return false;
         const transfer = state.transfers.find((item) => item.id === transferId);
         if (!transfer || transfer.status !== "PENDING_APPROVAL") return false;
 
@@ -809,7 +818,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       updatePolicy: async (policy) => {
         const role = resolveEffectiveRole(state);
-        if (!role) return;
+        if (!role || !canManagePolicy(role)) return;
 
         if (isSupabasePersistenceEnabled()) {
           await apiUpdatePolicy(policy);
@@ -827,7 +836,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       addWhitelistAddress: async (address) => {
         const role = resolveEffectiveRole(state);
-        if (!role) return;
+        if (!role || !canManagePolicy(role)) return;
 
         if (isSupabasePersistenceEnabled()) {
           await apiUpdatePolicy({
@@ -847,7 +856,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       removeWhitelistAddress: async (address) => {
         const role = resolveEffectiveRole(state);
-        if (!role) return;
+        if (!role || !canManagePolicy(role)) return;
 
         if (isSupabasePersistenceEnabled()) {
           await apiUpdatePolicy({

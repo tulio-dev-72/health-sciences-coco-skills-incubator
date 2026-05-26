@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
+import { requireFireblocksConfigured, requireFireblocksRole } from "@/lib/fireblocks/route-utils";
 import { getTransactionStatus } from "@/lib/fireblocks/service";
 import { getTransactionRecord } from "@/lib/fireblocks/webhook-store";
 
@@ -11,6 +11,14 @@ type RouteContext = {
 };
 
 export async function GET(_request: Request, context: RouteContext) {
+  const auth = await requireFireblocksRole(
+    ["treasury_manager", "admin"],
+    "Fireblocks transaction status is limited to Treasury Manager and Platform Admin.",
+  );
+  if ("error" in auth) {
+    return auth.error;
+  }
+
   const unavailable = requireFireblocksConfigured();
   if (unavailable) {
     return unavailable;

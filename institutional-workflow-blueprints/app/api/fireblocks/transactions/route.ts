@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
+import { requireFireblocksConfigured, requireFireblocksRole } from "@/lib/fireblocks/route-utils";
 import { extractFireblocksApiErrorDetails } from "@/lib/fireblocks/errors";
 import { createTransaction, getVaultAccountById } from "@/lib/fireblocks/service";
 import { buildTreasuryStateFromVault } from "@/lib/fireblocks/treasury-state";
@@ -23,6 +23,14 @@ type SubmitBody = {
 };
 
 export async function POST(request: Request) {
+  const auth = await requireFireblocksRole(
+    ["treasury_manager"],
+    "Only Treasury Manager can submit Fireblocks custody transactions.",
+  );
+  if ("error" in auth) {
+    return auth.error;
+  }
+
   const unavailable = requireFireblocksConfigured();
   if (unavailable) {
     return unavailable;

@@ -12,6 +12,8 @@ import {
   requiresRole,
 } from "@/lib/supabase/routes";
 import { getRoleDestination } from "@/lib/auth/role-destinations";
+import { canAccessRoute } from "@/lib/auth/permissions";
+import { isUserRole } from "@/lib/auth/role-labels";
 import { getSupabasePublicConfig, isDemoModeEnabled, isSupabaseConfigured } from "@/lib/supabase/config";
 
 const VALID_DEMO_ROLES = new Set(["analyst", "treasury_manager", "admin"]);
@@ -61,6 +63,18 @@ export async function updateSupabaseSession(request: NextRequest) {
       portalUrl.pathname = ACCESS_PORTAL;
       portalUrl.search = "";
       return NextResponse.redirect(portalUrl);
+    }
+
+    if (
+      demoRole &&
+      VALID_DEMO_ROLES.has(demoRole) &&
+      requiresRole(pathname) &&
+      !canAccessRoute(demoRole as "analyst" | "treasury_manager" | "admin", pathname)
+    ) {
+      const deniedUrl = request.nextUrl.clone();
+      deniedUrl.pathname = getRoleDestination(demoRole as "analyst" | "treasury_manager" | "admin");
+      deniedUrl.searchParams.set("denied", "1");
+      return NextResponse.redirect(deniedUrl);
     }
 
     return response;
@@ -137,6 +151,13 @@ export async function updateSupabaseSession(request: NextRequest) {
       roleUrl.pathname = AUTH_ROLE;
       roleUrl.search = "";
       return NextResponse.redirect(roleUrl);
+    }
+
+    if (isUserRole(role) && !canAccessRoute(role, pathname)) {
+      const deniedUrl = request.nextUrl.clone();
+      deniedUrl.pathname = getRoleDestination(role);
+      deniedUrl.searchParams.set("denied", "1");
+      return NextResponse.redirect(deniedUrl);
     }
   }
 

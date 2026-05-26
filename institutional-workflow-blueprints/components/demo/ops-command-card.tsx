@@ -6,18 +6,27 @@ import { Card, GhostButton, PrimaryButton, StatTile } from "@/components/ui/prim
 import { getDemoScenario } from "@/data/demo-scenarios";
 import { useFireblocksConnection } from "@/lib/fireblocks/use-fireblocks-connection";
 import { getRoleLabel, useAppStore } from "@/lib/store";
-import { canApproveTransfers, canManagePolicy } from "@/lib/policy";
+import {
+  canApproveTransfers,
+  canCreateSettlements,
+  canManagePolicy,
+  canViewAuditLogs,
+  canViewAuthorizationQueue,
+  filterTransfersForRole,
+} from "@/lib/policy";
 
 export function OpsCommandCard() {
   const { state, effectiveRole } = useAppStore();
   const { connected } = useFireblocksConnection();
   const scenario = getDemoScenario(state.activeBlueprint);
-  const pending = state.transfers.filter((t) => t.status === "PENDING_APPROVAL").length;
-  const settled = state.transfers.filter(
+  const visibleTransfers = filterTransfersForRole(state.transfers, effectiveRole);
+  const pending = visibleTransfers.filter((t) => t.status === "PENDING_APPROVAL").length;
+  const settled = visibleTransfers.filter(
     (t) => t.status === "SETTLED" || t.status === "APPROVED",
   ).length;
   const canApprove = canApproveTransfers(effectiveRole);
   const isAdmin = canManagePolicy(effectiveRole);
+  const canCreate = canCreateSettlements(effectiveRole);
 
   return (
     <Card variant="accent">
@@ -37,7 +46,7 @@ export function OpsCommandCard() {
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <StatTile label="Awaiting" value={pending} accent />
         <StatTile label="Cleared" value={settled} />
-        <StatTile label="In batch" value={state.transfers.length} />
+        <StatTile label="In batch" value={visibleTransfers.length} />
       </div>
 
       <p className="mt-2 font-mono text-[10px] text-ops-text-dim">{scenario.batchLabel}</p>
@@ -45,30 +54,35 @@ export function OpsCommandCard() {
       <div className="mt-4 rounded-lg border border-ops-border-subtle bg-ops-surface px-3 py-2.5 text-sm text-ops-text-secondary shadow-[var(--ops-shadow-sm)]">
         <span className="font-semibold text-ops-text-dim">Session</span>{" "}
         {effectiveRole ? getRoleLabel(effectiveRole) : "Unauthenticated"}
-        {effectiveRole === "analyst" && " · submit only"}
-        {effectiveRole === "treasury_manager" && " · approve queue"}
-        {effectiveRole === "admin" && " · policy & custody config"}
+        {effectiveRole === "analyst" && " · create settlement requests"}
+        {effectiveRole === "treasury_manager" && " · authorize custody release"}
+        {effectiveRole === "admin" && " · policy, audit, and integration oversight"}
       </div>
 
       <div className="mt-3 grid gap-2">
-        <Link href="/demo/approvals">
-          <PrimaryButton className="w-full">
-            {canApprove ? "Open transaction authorization" : "View authorization queue"}
-          </PrimaryButton>
-        </Link>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Link href="/demo/audit">
-            <GhostButton className="w-full">Audit log</GhostButton>
+        {canCreate ? (
+          <Link href="/demo/create">
+            <PrimaryButton className="w-full">Initiate settlement request</PrimaryButton>
           </Link>
+        ) : null}
+        {canViewAuthorizationQueue(effectiveRole) ? (
+          <Link href="/demo/approvals">
+            <PrimaryButton className="w-full" type="button">
+              {canApprove ? "Open transaction authorization" : "View authorization queue"}
+            </PrimaryButton>
+          </Link>
+        ) : null}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {canViewAuditLogs(effectiveRole) ? (
+            <Link href="/demo/audit">
+              <GhostButton className="w-full">Audit log</GhostButton>
+            </Link>
+          ) : null}
           {isAdmin ? (
             <Link href="/demo/settings">
               <GhostButton className="w-full">Policy admin</GhostButton>
             </Link>
-          ) : (
-            <Link href="/demo/login">
-              <GhostButton className="w-full">Switch role</GhostButton>
-            </Link>
-          )}
+          ) : null}
         </div>
       </div>
     </Card>

@@ -20,7 +20,7 @@ import {
   dedupePendingTransfers,
   type FireblocksTransactionDebugInfo,
 } from "@/lib/fireblocks/transaction-validation";
-import { canApproveTransfers } from "@/lib/policy";
+import { canApproveTransfers, canEscalateSettlements } from "@/lib/policy";
 import { useAppStore } from "@/lib/store";
 
 type SettlementPhase = "idle" | "creating" | "created" | "webhook";
@@ -76,6 +76,7 @@ export default function ApprovalsPage() {
     [state.transfers],
   );
   const canApprove = canApproveTransfers(effectiveRole);
+  const canEscalate = canEscalateSettlements(effectiveRole);
   const activeTransfer = state.transfers.find((item) => item.id === activeTransferId);
   const previewDebug = useMemo(
     () => (pending[0] ? buildTransactionDebugInfo({ transfer: pending[0], treasury: null }) : null),
@@ -169,12 +170,10 @@ export default function ApprovalsPage() {
 
         {!canApprove ? (
           <Card variant="accent">
-            <p className="text-sm font-semibold text-ops-warning">
-              Authorization restricted to Treasury Manager
-            </p>
+            <p className="text-sm font-semibold text-ops-warning">Read-only authorization queue</p>
             <p className="mt-1.5 text-xs leading-relaxed text-ops-text-secondary">
-              Analyst role can initiate and review settlements only. Switch role to authorize custody
-              release to Fireblocks infrastructure.
+              Platform Admin can review pending settlements. Custody authorization and Fireblocks
+              transaction submission are limited to Treasury Manager.
             </p>
           </Card>
         ) : null}
@@ -253,7 +252,7 @@ export default function ApprovalsPage() {
                           </DangerButton>
                           <SecondaryButton
                             className="w-full"
-                            disabled={busyId !== null}
+                            disabled={busyId !== null || !canEscalate}
                             onClick={() => handleEscalate(transfer.id)}
                           >
                             Escalate Review

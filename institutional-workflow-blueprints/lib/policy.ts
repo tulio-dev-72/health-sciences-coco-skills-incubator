@@ -99,10 +99,21 @@ export function getSettlementEvaluation(transfer: Transfer, policy?: PolicySetti
   };
 }
 
-export function canApproveTransfers(role: string | null): boolean {
-  return role === "treasury_manager" || role === "admin";
-}
-
-export function canManagePolicy(role: string | null): boolean {
-  return role === "admin";
-}
+export {
+  canApproveTransfers,
+  canCreateSettlements,
+  canEscalateSettlements,
+  canManagePolicy,
+  canReadPolicy,
+  canReadTreasuryOperations,
+  canRejectTransfers,
+  canSubmitFireblocksTransactions,
+  canSyncFireblocksLifecycle,
+  canViewAllSettlements,
+  canViewAuditLogs,
+  canViewAuthorizationQueue,
+  canViewFireblocksIntegrationStatus,
+  canViewOwnSettlements,
+  filterAuditLogForRole,
+  filterTransfersForRole,
+} from "@/lib/auth/permissions";

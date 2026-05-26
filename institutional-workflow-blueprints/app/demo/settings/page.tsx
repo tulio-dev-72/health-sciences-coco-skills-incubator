@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { DemoTopBar } from "@/components/demo/top-bar";
 import {
@@ -12,11 +11,13 @@ import {
   SectionHeader,
   TextInput,
 } from "@/components/ui/primitives";
+import { AccessDeniedCard } from "@/components/demo/access-denied-card";
 import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
 import { FundTreasuryMainPanel } from "@/components/demo/fund-treasury-main-panel";
 import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
 import { FireblocksIntegrationPanel } from "@/components/demo/fireblocks-panel";
 import { canManagePolicy } from "@/lib/policy";
+import { getAccessDeniedMessage } from "@/lib/auth/permissions";
 import { truncateAddress } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 
@@ -51,19 +52,11 @@ export default function SettingsPage() {
     return (
       <>
         <DemoTopBar title="Policy admin" subtitle="Governance rules and custody configuration." />
-        <main className="px-3 py-3">
-          <Card variant="accent">
-            <p className="text-xs font-medium text-ops-warning">Elevated access required.</p>
-            <p className="mt-1 text-[11px] text-ops-text-secondary">
-              Admin role required to modify policy and Fireblocks settings.
-            </p>
-            <Link
-              href="/demo?role=admin"
-              className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-ops-primary px-4 py-2.5 text-xs font-semibold text-white shadow-[var(--ops-shadow-sm)] transition hover:bg-ops-primary-hover"
-            >
-              Authenticate as admin
-            </Link>
-          </Card>
+        <main className="ops-page">
+          <AccessDeniedCard
+            message={getAccessDeniedMessage(effectiveRole, "/demo/settings")}
+            role={effectiveRole}
+          />
         </main>
       </>
     );

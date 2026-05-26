@@ -6,7 +6,10 @@ import {
 } from "@/lib/fireblocks/webhook-events";
 import { verifyFireblocksWebhookSignature } from "@/lib/fireblocks/webhook-verify";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { requireWorkflowUser } from "@/lib/supabase/workflow/auth";
+import {
+  assertRole,
+  requirePersistedWorkflowUser,
+} from "@/lib/supabase/workflow/auth";
 import { loadWorkflowState } from "@/lib/supabase/workflow/service";
 
 export const runtime = "nodejs";
@@ -79,9 +82,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    const auth = await requireWorkflowUser();
+    const auth = await requirePersistedWorkflowUser();
     if ("error" in auth) {
       return auth.error;
+    }
+
+    const roleError = assertRole(
+      auth.role,
+      ["treasury_manager", "admin"],
+      "Webhook lifecycle visibility is limited to Treasury Manager and Platform Admin.",
+    );
+    if (roleError) {
+      return roleError;
     }
 
     const [deliveries, workflow] = await Promise.all([
@@ -89,7 +101,10 @@ export async function GET(request: Request) {
         externalId,
         limit: 20,
       }),
-      loadWorkflowState(auth.supabase),
+      loadWorkflowState(auth.supabase, {
+        role: auth.role,
+        userId: auth.user.id,
+      }),
     ]);
 
     const transfer =

@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import { assertRole, requireWorkflowUser } from "@/lib/supabase/workflow/auth";
+import {
+  assertRole,
+  requirePersistedWorkflowUser,
+} from "@/lib/supabase/workflow/auth";
 import { createSettlement } from "@/lib/supabase/workflow/service";
 
 export async function POST(request: Request) {
   try {
-    const auth = await requireWorkflowUser();
+    const auth = await requirePersistedWorkflowUser();
     if ("error" in auth) {
       return auth.error;
     }
 
-    const roleError = assertRole(auth.role, ["analyst", "treasury_manager", "admin"]);
+    const roleError = assertRole(auth.role, ["analyst"], "Only Treasury Analyst can create settlement requests.");
     if (roleError) {
       return roleError;
     }

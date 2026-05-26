@@ -11,13 +11,14 @@ import {
   getSettlementLifecycleMode,
   type SettlementStatusSource,
 } from "@/lib/fireblocks/lifecycle";
+import { filterAuditLogForRole } from "@/lib/policy";
 import { useAppStore } from "@/lib/store";
 
 export default function AuditPage() {
-  const { state } = useAppStore();
+  const { state, effectiveRole } = useAppStore();
   const lastTransfer = state.transfers.find((item) => item.id === state.lastTransferId);
 
-  const lifecycleEvents = state.auditLog.filter(
+  const lifecycleEvents = filterAuditLogForRole(state.auditLog, effectiveRole).filter(
     (event) =>
       event.action === AUDIT_ACTIONS.webhookStatusUpdated ||
       event.action === AUDIT_ACTIONS.settlementCompleted,
@@ -65,7 +66,7 @@ export default function AuditPage() {
           }
         />
 
-        {state.auditLog.length === 0 ? (
+        {filterAuditLogForRole(state.auditLog, effectiveRole).length === 0 ? (
           <Card variant="ghost">
             <p className="text-xs text-ops-text-secondary">
               Audit log empty. All authorization and webhook events are recorded here.
@@ -73,7 +74,7 @@ export default function AuditPage() {
           </Card>
         ) : (
           <Card variant="elevated">
-            <AuditTimeline events={state.auditLog} />
+            <AuditTimeline events={filterAuditLogForRole(state.auditLog, effectiveRole)} />
           </Card>
         )}
 

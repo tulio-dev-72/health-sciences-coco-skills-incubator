@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
+import { requireFireblocksConfigured, requireFireblocksRole, TREASURY_OPS_ROLES } from "@/lib/fireblocks/route-utils";
 import { getTreasuryMainFundingInfo } from "@/lib/fireblocks/service";
 
 export const runtime = "nodejs";
 
 export async function GET() {
+  const auth = await requireFireblocksRole(
+    TREASURY_OPS_ROLES,
+    "Treasury funding data requires an authenticated operational role.",
+  );
+  if ("error" in auth) {
+    return auth.error;
+  }
+
   const unavailable = requireFireblocksConfigured();
   if (unavailable) {
     return unavailable;

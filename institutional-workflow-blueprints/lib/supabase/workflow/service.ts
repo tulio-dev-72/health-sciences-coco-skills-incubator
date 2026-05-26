@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { canReadPolicy, canViewAuditLogs, canViewOwnSettlements } from "@/lib/auth/permissions";
 import { AUDIT_ACTIONS } from "@/lib/audit";
 import { formatCurrency } from "@/lib/format";
 import { mapFireblocksToSettlementLifecycle, auditActorForStatusSource, type SettlementStatusSource } from "@/lib/fireblocks/lifecycle";
@@ -22,14 +23,31 @@ import type { PolicySettings, Transfer, UserRole } from "@/lib/types";
 
 const DEFAULT_POLICY_ID = "00000000-0000-0000-0000-000000000001";
 
-export async function loadWorkflowState(supabase: SupabaseClient): Promise<WorkflowSnapshot> {
+export async function loadWorkflowState(
+  supabase: SupabaseClient,
+  context: { role: UserRole; userId: string },
+): Promise<WorkflowSnapshot> {
+  let settlementsQuery = supabase
+    .from("settlement_requests")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (canViewOwnSettlements(context.role)) {
+    settlementsQuery = settlementsQuery.eq("created_by", context.userId);
+  }
+
+  const settlementsPromise = settlementsQuery;
+  const auditPromise = canViewAuditLogs(context.role)
+    ? supabase.from("audit_logs").select("*").order("created_at", { ascending: false })
+    : Promise.resolve({ data: [] as AuditLogRow[], error: null });
+  const policyPromise = canReadPolicy(context.role)
+    ? supabase.from("policies").select("*").eq("id", DEFAULT_POLICY_ID).maybeSingle()
+    : Promise.resolve({ data: null, error: null });
+
   const [settlementsResult, auditResult, policyResult] = await Promise.all([
-    supabase
-      .from("settlement_requests")
-      .select("*")
-      .order("created_at", { ascending: false }),
-    supabase.from("audit_logs").select("*").order("created_at", { ascending: false }),
-    supabase.from("policies").select("*").eq("id", DEFAULT_POLICY_ID).maybeSingle(),
+    settlementsPromise,
+    auditPromise,
+    policyPromise,
   ]);
 
   if (settlementsResult.error) {

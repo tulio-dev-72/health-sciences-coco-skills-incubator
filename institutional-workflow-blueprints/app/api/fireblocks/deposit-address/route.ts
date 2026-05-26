@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 
-import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
+import { requireFireblocksConfigured, requireFireblocksRole, TREASURY_OPS_ROLES } from "@/lib/fireblocks/route-utils";
 import { getDepositAddress, getTreasuryMainVault } from "@/lib/fireblocks/service";
 
 export async function GET(request: Request) {
+  const auth = await requireFireblocksRole(
+    TREASURY_OPS_ROLES,
+    "Deposit address lookup requires an authenticated operational role.",
+  );
+  if ("error" in auth) {
+    return auth.error;
+  }
+
   const unavailable = requireFireblocksConfigured();
   if (unavailable) {
     return unavailable;

@@ -10,16 +10,18 @@ import { TreasuryMainVaultCard } from "@/components/demo/treasury-main-vault-car
 import { TransferCard } from "@/components/demo/transfer-card";
 import { APP_TERMS } from "@/data/infrastructure-mapping";
 import { Card, SectionHeader, StatTile } from "@/components/ui/primitives";
+import { filterTransfersForRole } from "@/lib/policy";
 import { useAppStore } from "@/lib/store";
 
 export default function DemoDashboardPage() {
-  const { state } = useAppStore();
+  const { state, effectiveRole } = useAppStore();
+  const visibleTransfers = filterTransfersForRole(state.transfers, effectiveRole);
 
-  const pendingPayouts = state.transfers.filter((t) => t.status === "PENDING_APPROVAL");
-  const clearedToday = state.transfers.filter(
+  const pendingPayouts = visibleTransfers.filter((t) => t.status === "PENDING_APPROVAL");
+  const clearedToday = visibleTransfers.filter(
     (t) => t.status === "SETTLED" || t.status === "APPROVED",
   );
-  const riskAlerts = state.transfers.filter(
+  const riskAlerts = visibleTransfers.filter(
     (t) =>
       t.riskLevel === "high" &&
       (t.status === "PENDING_APPROVAL" || t.status === "CREATED"),
