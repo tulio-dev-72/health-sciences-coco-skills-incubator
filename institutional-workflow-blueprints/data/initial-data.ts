@@ -67,31 +67,10 @@ export const defaultPolicy: PolicySettings = {
   ],
 };
 
-export const initialVaultBalances: VaultBalance[] = [
-  {
-    asset: "USDC",
-    label: "Treasury Main",
-    balance: 12500000,
-    available: 12500000,
-    pendingOut: 0,
-  },
-  {
-    asset: "USD",
-    label: "Settlement Reserve",
-    balance: 9100000,
-    available: 9100000,
-    pendingOut: 0,
-  },
-  {
-    asset: "USDT",
-    label: "Payout Vault",
-    balance: 1650000,
-    available: 1650000,
-    pendingOut: 0,
-  },
-];
+export const initialVaultBalances: VaultBalance[] = [];
 
-export const supportedAssets = initialVaultBalances.map((vault) => vault.asset);
+/** Asset IDs are discovered from Fireblocks SDK at runtime — not hardcoded balances. */
+export const supportedAssets: string[] = [];
 
 export const destinationPresets = [
   {
@@ -138,15 +117,7 @@ export const fireblocksDemoDestination = {
 };
 
 export function getFireblocksDemoVaultBalances(): VaultBalance[] {
-  return [
-    {
-      asset: "ETH_TEST5",
-      label: "Sepolia Vault Account 0 (Fireblocks)",
-      balance: 0.05,
-      available: 0.05,
-      pendingOut: 0,
-    },
-  ];
+  return [];
 }
 
 export const demoPendingTransfer: Transfer = {
@@ -203,10 +174,7 @@ export function applyDemoPendingApproval(state: {
   vaultBalances: VaultBalance[];
 } {
   const { asset, amount } = demoPendingTransfer;
-  const vaultBalances =
-    state.vaultBalances.some((vault) => vault.asset === asset)
-      ? state.vaultBalances.map((vault) => ({ ...vault }))
-      : getFireblocksDemoVaultBalances();
+  const vaultBalances = state.vaultBalances.map((vault) => ({ ...vault }));
 
   return {
     transfers: [demoPendingTransfer, ...state.transfers],

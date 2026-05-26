@@ -3,7 +3,6 @@ import { AUDIT_ACTIONS } from "@/lib/audit";
 import {
   destinationPresets,
   fireblocksDemoDestination,
-  getFireblocksDemoVaultBalances,
 } from "@/data/initial-data";
 
 export type DemoScenario = {
@@ -32,7 +31,7 @@ function applyVaultLedger(
   transfers: Transfer[],
 ): VaultBalance[] {
   const asset = vaults[0]?.asset ?? "ETH_TEST5";
-  const startingBalance = vaults[0]?.balance ?? 0.05;
+  const startingBalance = vaults[0]?.balance ?? 0;
 
   let balance = startingBalance;
   for (const transfer of transfers) {
@@ -179,7 +178,7 @@ const treasuryScenario: DemoScenario = {
       details: "TRX-DEMO-001 routed to Treasury Manager approval queue.",
     },
   ],
-  vaultBalances: getFireblocksDemoVaultBalances(),
+  vaultBalances: [],
   walkthrough: [
     {
       step: 1,
@@ -289,7 +288,7 @@ const withdrawalScenario: DemoScenario = {
       details: "TRX-DEMO-001 held for trading desk manager review.",
     },
   ],
-  vaultBalances: getFireblocksDemoVaultBalances(),
+  vaultBalances: [],
   walkthrough: [
     {
       step: 1,

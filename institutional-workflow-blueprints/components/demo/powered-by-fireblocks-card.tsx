@@ -2,7 +2,7 @@
 
 import { LiveBadge } from "@/components/ui/badges";
 import { Card, SectionHeader } from "@/components/ui/primitives";
-import { useAppStore } from "@/lib/store";
+import { useFireblocksConnection } from "@/lib/fireblocks/use-fireblocks-connection";
 
 const fireblocksCapabilities = [
   { title: "Custody", detail: "MPC vaults — assets held in qualified institutional custody." },
@@ -12,7 +12,7 @@ const fireblocksCapabilities = [
 ];
 
 export function PoweredByFireblocksCard({ compact = false }: { compact?: boolean }) {
-  const { state } = useAppStore();
+  const { connected, status } = useFireblocksConnection();
 
   return (
     <Card variant="elevated">
@@ -28,7 +28,7 @@ export function PoweredByFireblocksCard({ compact = false }: { compact?: boolean
             }
           />
         </div>
-        <LiveBadge live={state.fireblocksEnabled} />
+        <LiveBadge live={connected} />
       </div>
 
       <div className="grid gap-1.5">
@@ -47,15 +47,20 @@ export function PoweredByFireblocksCard({ compact = false }: { compact?: boolean
 
       <p className="mt-2.5 rounded-lg border border-ops-border-subtle bg-ops-overlay/40 px-2.5 py-2 text-[11px] text-ops-text-secondary">
         Real Fireblocks sandbox infrastructure using test assets, not mainnet funds.{" "}
-        {state.fireblocksEnabled ? (
+        {connected ? (
           <>
-            <span className="font-medium text-ops-text">On approve:</span> payout released to
-            Fireblocks for MPC signing. Status via webhook.
+            <span className="font-medium text-ops-text">Fireblocks connected.</span> Treasury Main
+            vault ID{" "}
+            {status.treasuryMainVaultId ? (
+              <span className="font-mono text-ops-text">{status.treasuryMainVaultId}</span>
+            ) : (
+              "is discovered from the SDK at runtime."
+            )}
           </>
         ) : (
           <>
-            <span className="font-medium text-ops-text">Local mode:</span> enable Fireblocks in
-            Policy Admin for live settlement.
+            <span className="font-medium text-ops-text">Fireblocks offline.</span>{" "}
+            {status.message}
           </>
         )}
       </p>

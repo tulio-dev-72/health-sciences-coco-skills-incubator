@@ -274,13 +274,16 @@ export async function fetchFireblocksVaultBalances(): Promise<FireblocksVaultBal
 export function getFireblocksStatus(): FireblocksStatus {
   const integration = getFireblocksIntegrationStatus();
   const config = getFireblocksConfig();
+  const configuredVaultId = config?.sourceVaultId;
+  const sourceVaultId =
+    configuredVaultId && configuredVaultId !== "0" ? configuredVaultId : null;
 
   return {
     configured: integration.configured,
     integrationStatus: integration.integrationStatus,
     message: integration.message,
     basePath: config?.basePath ?? getFireblocksBaseUrlFallback(),
-    sourceVaultId: config?.sourceVaultId ?? null,
+    sourceVaultId,
     treasuryMainVaultId: null,
     treasuryMainVaultName: TREASURY_MAIN_VAULT_NAME,
     sandboxNotice: SANDBOX_INFRASTRUCTURE_COPY,
@@ -305,9 +308,16 @@ export async function getFireblocksStatusWithTreasury(): Promise<FireblocksStatu
 
   try {
     const treasury = await getTreasuryMainVault();
+    const config = getFireblocksConfig();
+    const resolvedVaultId = treasury?.id ?? null;
+    const configuredFallback =
+      config?.sourceVaultId && config.sourceVaultId !== "0" ? config.sourceVaultId : null;
+
     return {
       ...status,
-      treasuryMainVaultId: treasury?.id ?? status.sourceVaultId,
+      treasuryMainVaultId: resolvedVaultId,
+      treasuryMainVaultName: treasury?.name ?? TREASURY_MAIN_VAULT_NAME,
+      sourceVaultId: resolvedVaultId ?? configuredFallback ?? status.sourceVaultId,
     };
   } catch {
     return status;

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { RoleBadge, LiveBadge } from "@/components/ui/badges";
 import { useAuth } from "@/components/auth/auth-provider";
 import { exitSandboxSession } from "@/lib/auth/exit-sandbox-session";
+import { useFireblocksConnection } from "@/lib/fireblocks/use-fireblocks-connection";
 import { getRoleLabel, useAppStore } from "@/lib/store";
 
 const shellMaxWidth = "max-w-lg md:max-w-2xl xl:max-w-4xl";
@@ -17,7 +18,8 @@ export function DemoTopBar({
 }) {
   const router = useRouter();
   const { isSupabaseAuth, signOut } = useAuth();
-  const { effectiveRole, sessionReady, clearRole, actorName, state } = useAppStore();
+  const { effectiveRole, sessionReady, clearRole, actorName } = useAppStore();
+  const { connected } = useFireblocksConnection();
   const displayRole = sessionReady ? effectiveRole : null;
   const displayName = sessionReady ? actorName : "Loading…";
 
@@ -44,7 +46,7 @@ export function DemoTopBar({
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ops-text-secondary">
               Treasury Control Center
             </p>
-            <LiveBadge live={state.fireblocksEnabled} />
+            <LiveBadge live={connected} />
           </div>
           <h1 className="mt-0.5 text-base font-semibold text-ops-text">{title}</h1>
           {subtitle ? (

@@ -4,11 +4,13 @@ import Link from "next/link";
 import { LiveBadge } from "@/components/ui/badges";
 import { Card, GhostButton, PrimaryButton, StatTile } from "@/components/ui/primitives";
 import { getDemoScenario } from "@/data/demo-scenarios";
+import { useFireblocksConnection } from "@/lib/fireblocks/use-fireblocks-connection";
 import { getRoleLabel, useAppStore } from "@/lib/store";
 import { canApproveTransfers, canManagePolicy } from "@/lib/policy";
 
 export function OpsCommandCard() {
   const { state, effectiveRole } = useAppStore();
+  const { connected } = useFireblocksConnection();
   const scenario = getDemoScenario(state.activeBlueprint);
   const pending = state.transfers.filter((t) => t.status === "PENDING_APPROVAL").length;
   const settled = state.transfers.filter(
@@ -29,7 +31,7 @@ export function OpsCommandCard() {
             {scenario.queueSummary}
           </p>
         </div>
-        <LiveBadge live={state.fireblocksEnabled} />
+        <LiveBadge live={connected} />
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
