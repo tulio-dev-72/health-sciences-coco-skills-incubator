@@ -113,11 +113,12 @@ export default function ApprovalsPage() {
 
         {!canApprove ? (
           <Card variant="accent">
-            <p className="text-xs font-medium text-ops-warning">
-              Analyst role cannot authorize settlements.
+            <p className="text-sm font-semibold text-ops-warning">
+              Authorization restricted to Treasury Manager
             </p>
-            <p className="mt-1 text-[11px] text-ops-text-secondary">
-              Switch to Treasury Manager to release authorized settlements to Fireblocks.
+            <p className="mt-1.5 text-xs leading-relaxed text-ops-text-secondary">
+              Analyst role can initiate and review settlements only. Switch role to authorize custody
+              release to Fireblocks infrastructure.
             </p>
           </Card>
         ) : null}

@@ -55,7 +55,7 @@ export default function CreateTransferPage() {
     <>
       <DemoTopBar
         title="Initiate Settlement"
-        subtitle="Submit settlement request using live Fireblocks sandbox discovery when configured."
+        subtitle="Treasury Analyst submits institutional USDC settlement request for policy evaluation and authorization."
       />
       <ConnectedWorkflowStepper />
 

@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Treasury Control Center | Powered by Fireblocks",
+  title: "Treasury Control Center | Institutional Settlement Governance",
   description:
-    "Treasury and payout controls — request, review, and approve stablecoin payouts on top of Fireblocks custody.",
+    "Institutional stablecoin settlement governance — authorization workflows, MPC custody controls, and audit visibility on Fireblocks infrastructure.",
 };
 
 export default function RootLayout({

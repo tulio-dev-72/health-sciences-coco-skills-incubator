@@ -2,40 +2,40 @@
 
 :root {
   /* Institutional fintech — warm light surfaces, deep navy type */
-  --ops-bg: #f6f7f9;
-  --ops-bg-gradient-top: #fafbfc;
-  --ops-bg-gradient-bottom: #eef1f6;
+  --ops-bg: #eef1f5;
+  --ops-bg-gradient-top: #f4f6f9;
+  --ops-bg-gradient-bottom: #e6eaf0;
   --ops-surface: #ffffff;
   --ops-elevated: #ffffff;
-  --ops-overlay: #f1f4f8;
-  --ops-border: #dfe5ee;
-  --ops-border-subtle: #e9edf3;
-  --ops-text: #0f2744;
-  --ops-text-secondary: #5c6b7f;
-  --ops-text-dim: #8b97a8;
+  --ops-overlay: #e8edf3;
+  --ops-border: #c5ced9;
+  --ops-border-subtle: #d4dbe4;
+  --ops-text: #081a30;
+  --ops-text-secondary: #334155;
+  --ops-text-dim: #526277;
 
   /* Navy primary actions — enterprise trust */
-  --ops-primary: #0f2744;
-  --ops-primary-hover: #0a1c33;
-  --ops-primary-muted: rgba(15, 39, 68, 0.06);
+  --ops-primary: #0a1f38;
+  --ops-primary-hover: #061528;
+  --ops-primary-muted: rgba(10, 31, 56, 0.08);
 
   /* Muted orange — accent only */
-  --ops-accent: #d96b4a;
-  --ops-accent-hover: #c45a3a;
-  --ops-accent-muted: rgba(217, 107, 74, 0.1);
+  --ops-accent: #c85a3a;
+  --ops-accent-hover: #b34a2e;
+  --ops-accent-muted: rgba(200, 90, 58, 0.12);
 
-  --ops-success: #0d7a5f;
-  --ops-success-muted: rgba(13, 122, 95, 0.08);
-  --ops-warning: #b7791f;
-  --ops-warning-muted: rgba(183, 121, 31, 0.1);
-  --ops-danger: #c0392b;
-  --ops-danger-muted: rgba(192, 57, 43, 0.08);
-  --ops-info: #2563eb;
-  --ops-info-muted: rgba(37, 99, 235, 0.08);
+  --ops-success: #0a6b52;
+  --ops-success-muted: rgba(10, 107, 82, 0.1);
+  --ops-warning: #9a6512;
+  --ops-warning-muted: rgba(154, 101, 18, 0.12);
+  --ops-danger: #a83226;
+  --ops-danger-muted: rgba(168, 50, 38, 0.1);
+  --ops-info: #1d4ed8;
+  --ops-info-muted: rgba(29, 78, 216, 0.1);
 
-  --ops-shadow-sm: 0 1px 2px rgba(15, 39, 68, 0.04), 0 1px 3px rgba(15, 39, 68, 0.06);
-  --ops-shadow-md: 0 4px 12px rgba(15, 39, 68, 0.06), 0 2px 4px rgba(15, 39, 68, 0.04);
-  --ops-shadow-lg: 0 12px 32px rgba(15, 39, 68, 0.08), 0 4px 8px rgba(15, 39, 68, 0.04);
+  --ops-shadow-sm: 0 1px 2px rgba(8, 26, 48, 0.06), 0 1px 3px rgba(8, 26, 48, 0.08);
+  --ops-shadow-md: 0 4px 14px rgba(8, 26, 48, 0.08), 0 2px 4px rgba(8, 26, 48, 0.05);
+  --ops-shadow-lg: 0 12px 32px rgba(8, 26, 48, 0.1), 0 4px 8px rgba(8, 26, 48, 0.06);
 
   /* Legacy aliases */
   --fb-black: var(--ops-text);

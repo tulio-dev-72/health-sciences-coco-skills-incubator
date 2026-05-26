@@ -7,8 +7,8 @@ const cardVariants: Record<CardVariant, string> = {
   elevated:
     "bg-ops-elevated border-ops-border shadow-[var(--ops-shadow-md)]",
   accent:
-    "bg-ops-surface border-ops-border shadow-[var(--ops-shadow-md)] ring-1 ring-ops-primary/8",
-  ghost: "bg-transparent border-ops-border-subtle",
+    "bg-ops-surface border-ops-border shadow-[var(--ops-shadow-md)] ring-1 ring-ops-primary/12",
+  ghost: "bg-ops-overlay/40 border-ops-border-subtle",
 };
 
 export function Card({
@@ -26,7 +26,7 @@ export function Card({
 
   return (
     <div
-      className={`rounded-xl border p-4 text-ops-text ${cardVariants[resolved]} ${className}`}
+      className={`rounded-xl border p-4 text-ops-text sm:p-5 ${cardVariants[resolved]} ${className}`}
     >
       {children}
     </div>
@@ -48,15 +48,15 @@ export function SectionHeader({
     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
         {label ? (
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ops-text-dim">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ops-text-secondary">
             {label}
           </p>
         ) : null}
-        <h2 className={`font-semibold tracking-tight text-ops-text ${label ? "mt-1" : ""} text-sm`}>
+        <h2 className={`font-semibold tracking-tight text-ops-text ${label ? "mt-1" : ""} text-base`}>
           {title}
         </h2>
         {subtitle ? (
-          <p className="mt-1 text-xs leading-relaxed text-ops-text-secondary">{subtitle}</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-ops-text-secondary">{subtitle}</p>
         ) : null}
       </div>
       {action}
@@ -71,7 +71,7 @@ export function PrimaryButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-lg bg-ops-primary px-4 py-2.5 text-xs font-semibold text-white shadow-[var(--ops-shadow-sm)] transition hover:bg-ops-primary-hover disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center rounded-lg bg-ops-primary px-4 py-2.5 text-xs font-semibold text-white shadow-[var(--ops-shadow-md)] transition hover:bg-ops-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}
@@ -86,7 +86,7 @@ export function SecondaryButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`inline-flex min-h-11 items-center justify-center whitespace-normal rounded-lg border border-ops-border bg-ops-surface px-4 py-2.5 text-xs font-medium text-ops-text shadow-[var(--ops-shadow-sm)] transition hover:border-ops-text-dim/30 hover:bg-ops-overlay disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center whitespace-normal rounded-lg border border-ops-border bg-ops-surface px-4 py-2.5 text-xs font-semibold text-ops-text shadow-[var(--ops-shadow-sm)] transition hover:border-ops-primary/25 hover:bg-ops-overlay disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}
@@ -101,7 +101,7 @@ export function GhostButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`inline-flex min-h-11 items-center justify-center whitespace-normal rounded-lg border border-ops-border bg-transparent px-3 py-2 text-xs font-medium text-ops-text-secondary transition hover:border-ops-text-dim/30 hover:bg-ops-overlay hover:text-ops-text disabled:opacity-40 ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center whitespace-normal rounded-lg border border-ops-border bg-transparent px-3 py-2 text-xs font-medium text-ops-text-secondary transition hover:border-ops-primary/20 hover:bg-ops-overlay hover:text-ops-text disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}
@@ -116,7 +116,7 @@ export function DangerButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`inline-flex min-h-11 items-center justify-center whitespace-normal rounded-lg border border-ops-danger/20 bg-ops-danger-muted px-4 py-2.5 text-xs font-medium text-ops-danger transition hover:border-ops-danger/35 disabled:opacity-40 ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center whitespace-normal rounded-lg border border-ops-danger/30 bg-ops-danger-muted px-4 py-2.5 text-xs font-semibold text-ops-danger transition hover:border-ops-danger/45 active:scale-[0.99] disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}
@@ -134,7 +134,7 @@ export function InputLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-dim"
+      className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-secondary"
     >
       {children}
     </label>
@@ -142,7 +142,7 @@ export function InputLabel({
 }
 
 const inputClass =
-  "w-full rounded-lg border border-ops-border bg-ops-surface px-3 py-2.5 text-sm text-ops-text shadow-[var(--ops-shadow-sm)] outline-none transition placeholder:text-ops-text-dim focus:border-ops-info/40 focus:ring-2 focus:ring-ops-info/10";
+  "w-full rounded-lg border border-ops-border bg-ops-surface px-3 py-2.5 text-sm font-medium text-ops-text shadow-[var(--ops-shadow-sm)] outline-none transition placeholder:text-ops-text-dim focus:border-ops-primary/30 focus:ring-2 focus:ring-ops-primary/10";
 
 export function TextInput({
   className = "",
@@ -182,8 +182,8 @@ export function StatTile({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-ops-border bg-ops-surface px-4 py-3 shadow-[var(--ops-shadow-sm)]">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-dim">
+    <div className="rounded-xl border border-ops-border bg-ops-surface px-4 py-3.5 shadow-[var(--ops-shadow-sm)]">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-secondary">
         {label}
       </p>
       <p

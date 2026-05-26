@@ -26,6 +26,7 @@ import {
 import { formatCurrency } from "@/lib/format";
 import { evaluateTransferPolicy, normalizeAddress } from "@/lib/policy";
 import { AUDIT_ACTIONS } from "@/lib/audit";
+import { getFireblocksStatusLabel } from "@/lib/fireblocks/lifecycle";
 import {
   isPrimaryBlueprint,
   PRIMARY_DEMO_TIMES,
@@ -480,7 +481,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
           action: AUDIT_ACTIONS.webhookStatusUpdated,
           actor: "Fireblocks Webhook",
           role: "admin",
-          details: `${action.status}${completed ? " — settlement completed" : ""}`,
+          details: completed
+            ? `${getFireblocksStatusLabel(action.status)} — institutional settlement finalized and recorded in audit trail.`
+            : `${getFireblocksStatusLabel(action.status)} — webhook event received from Fireblocks infrastructure.`,
         },
         webhookTimestamp,
       );
@@ -699,7 +702,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return { ok: false, error: "Amount must be greater than zero." };
         }
         if (!input.destination.trim() || !input.reason.trim()) {
-          return { ok: false, error: "Destination wallet and reason are required." };
+          return { ok: false, error: "Destination address and settlement reason are required." };
         }
 
         if (isSupabasePersistenceEnabled()) {

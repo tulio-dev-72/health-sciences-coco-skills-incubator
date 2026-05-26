@@ -35,18 +35,18 @@ export function DemoTopBar({
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-ops-border bg-ops-surface/90 shadow-[var(--ops-shadow-sm)] backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-ops-border bg-ops-surface/95 shadow-[var(--ops-shadow-sm)] backdrop-blur-md">
       <div
         className={`mx-auto flex ${shellMaxWidth} flex-col gap-3 px-3 py-3 sm:flex-row sm:items-start sm:justify-between`}
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ops-text-dim">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ops-text-secondary">
               Treasury Control Center
             </p>
             <LiveBadge live={state.fireblocksEnabled} />
           </div>
-          <h1 className="mt-0.5 text-sm font-semibold text-ops-text">{title}</h1>
+          <h1 className="mt-0.5 text-base font-semibold text-ops-text">{title}</h1>
           {subtitle ? (
             <p className="mt-0.5 text-xs leading-relaxed text-ops-text-secondary">{subtitle}</p>
           ) : null}

@@ -6,7 +6,7 @@ export const AUDIT_ACTIONS = {
   managerAuthorized: "Treasury Manager authorized settlement",
   settlementRejected: "Settlement rejected",
   fireblocksTransactionCreated: "Fireblocks transaction created",
-  webhookStatusUpdated: "Webhook status updated",
+  webhookStatusUpdated: "Settlement lifecycle updated",
   settlementCompleted: "Settlement completed",
   tapPolicyUpdated: "TAP policy configuration updated",
   allowlistUpdated: "Destination allowlist updated",

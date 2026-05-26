@@ -50,3 +50,48 @@ export const WEBHOOK_LIFECYCLE_ORDER = [
   "CONFIRMING",
   "COMPLETED",
 ] as const;
+
+export type WebhookLifecycleStatus = (typeof WEBHOOK_LIFECYCLE_ORDER)[number];
+
+export const FIREBLOCKS_STATUS_LABELS: Record<string, string> = {
+  PENDING_SIGNATURE: "Awaiting MPC signature",
+  PENDING_AUTHORIZATION: "Awaiting authorization",
+  CONFIRMING: "Confirming on settlement rail",
+  COMPLETED: "Settlement complete",
+  SUBMITTED: "Submitted to custody",
+  BROADCASTING: "Broadcasting to network",
+  FAILED: "Settlement failed",
+  REJECTED: "Rejected by policy",
+  CANCELLED: "Cancelled",
+};
+
+export const WEBHOOK_LIFECYCLE_STEPS: ReadonlyArray<{
+  status: WebhookLifecycleStatus;
+  label: string;
+  description: string;
+}> = [
+  {
+    status: "PENDING_SIGNATURE",
+    label: "Awaiting MPC signature",
+    description: "Fireblocks TAP policy and co-signer authorization in progress.",
+  },
+  {
+    status: "CONFIRMING",
+    label: "Confirming on settlement rail",
+    description: "Sepolia testnet confirmation for USDC test asset release.",
+  },
+  {
+    status: "COMPLETED",
+    label: "Settlement complete",
+    description: "Custody release finalized — audit record updated.",
+  },
+];
+
+export function getFireblocksStatusLabel(status: string): string {
+  const normalized = normalizeFireblocksStatus(status);
+  return FIREBLOCKS_STATUS_LABELS[normalized] ?? normalized.replaceAll("_", " ").toLowerCase();
+}
+
+export function getWebhookLifecycleStepIndex(status: string): number {
+  return WEBHOOK_LIFECYCLE_ORDER.indexOf(normalizeFireblocksStatus(status) as WebhookLifecycleStatus);
+}
