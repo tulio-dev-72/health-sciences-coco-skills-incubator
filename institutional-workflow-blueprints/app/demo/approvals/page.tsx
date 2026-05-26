@@ -1,7 +1,7 @@
 "use client";
 
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
 import { AuthorizationDebugPanel } from "@/components/demo/authorization-debug-panel";
 import { DemoTopBar } from "@/components/demo/top-bar";
 import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
@@ -28,6 +28,18 @@ type SettlementPhase = "idle" | "creating" | "created" | "webhook";
 const showDevDebugPanel =
   process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_AUTH_DEBUG === "true";
 
+function formatExactFireblocksError(failure: AuthorizedFireblocksTransferFailure | null): string | null {
+  if (!failure) {
+    return null;
+  }
+
+  if (failure.raw && failure.raw.trim() && failure.raw.trim() !== failure.message.trim()) {
+    return `${failure.message} — ${failure.raw.trim()}`;
+  }
+
+  return failure.message;
+}
+
 export default function ApprovalsPage() {
   const router = useRouter();
   const {
@@ -46,6 +58,7 @@ export default function ApprovalsPage() {
   const [phase, setPhase] = useState<SettlementPhase>("idle");
   const [activeTransferId, setActiveTransferId] = useState<string | null>(null);
   const [webhookStatuses, setWebhookStatuses] = useState<string[]>([]);
+  const authorizingRef = useRef(false);
 
   const pending = useMemo(
     () => dedupePendingTransfers(state.transfers),
@@ -58,6 +71,7 @@ export default function ApprovalsPage() {
     [pending],
   );
   const visibleDebug = debugInfo ?? failure?.debug ?? previewDebug;
+  const exactError = formatExactFireblocksError(failure) ?? error;
 
   async function simulateWebhookLifecycle(transferId: string, fireblocksTxId: string) {
     setPhase("webhook");
@@ -79,6 +93,11 @@ export default function ApprovalsPage() {
   }
 
   async function handleAuthorize(transferId: string) {
+    if (authorizingRef.current || busyId !== null) {
+      return;
+    }
+
+    authorizingRef.current = true;
     setError(null);
     setFailure(null);
     setBusyId(transferId);
@@ -91,15 +110,19 @@ export default function ApprovalsPage() {
       setPhase("idle");
       setActiveTransferId(null);
       setBusyId(null);
+      authorizingRef.current = false;
       setError("Settlement request not found.");
       return;
     }
 
     try {
-      const result = await submitAuthorizedFireblocksTransfer(transfer, state.fireblocksEnabled);
+      const result = await submitAuthorizedFireblocksTransfer(transfer);
       setDebugInfo(result.debug);
 
-      await new Promise((resolve) => setTimeout(resolve, 1400));
+      if (result.demoMode) {
+        await new Promise((resolve) => setTimeout(resolve, 1400));
+      }
+
       setPhase("created");
       const approved = await approveTransfer(transferId, {
         fireblocksTxId: result.fireblocksTxId,
@@ -119,9 +142,10 @@ export default function ApprovalsPage() {
       setWorkflowStep("approval");
       setFailure(failureDetails);
       setDebugInfo(failureDetails.debug);
-      setError(failureDetails.message);
+      setError(formatExactFireblocksError(failureDetails));
     } finally {
       setBusyId(null);
+      authorizingRef.current = false;
     }
   }
 
@@ -158,10 +182,10 @@ export default function ApprovalsPage() {
           </Card>
         ) : null}
 
-        {error ? (
+        {exactError ? (
           <Card variant="accent">
             <p className="text-sm font-semibold text-ops-danger">Authorization failed</p>
-            <p className="mt-1.5 text-xs leading-relaxed text-ops-text-secondary">{error}</p>
+            <p className="mt-1.5 break-words text-xs leading-relaxed text-ops-text">{exactError}</p>
             {failure?.category ? (
               <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-ops-text-dim">
                 Failure category: {failure.category.replaceAll("_", " ")}
@@ -177,7 +201,7 @@ export default function ApprovalsPage() {
           <AuthorizationDebugPanel
             debug={visibleDebug}
             apiResponse={failure?.apiResponse}
-            rawError={failure?.raw ?? null}
+            rawError={failure?.raw ?? exactError}
           />
         ) : null}
 

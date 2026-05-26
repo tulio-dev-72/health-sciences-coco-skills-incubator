@@ -181,7 +181,6 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
     try {
       const { fireblocksTxId, fireblocksStatus } = await submitAuthorizedFireblocksTransfer(
         pendingTransfer,
-        state.fireblocksEnabled,
       );
 
       await new Promise((resolve) => setTimeout(resolve, 1400));

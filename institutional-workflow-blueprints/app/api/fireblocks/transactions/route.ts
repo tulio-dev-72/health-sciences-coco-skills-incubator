@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
+import { extractFireblocksApiErrorDetails } from "@/lib/fireblocks/errors";
 import { createTransaction, getVaultAccountById } from "@/lib/fireblocks/service";
 import { buildTreasuryStateFromVault } from "@/lib/fireblocks/treasury-state";
 import {
@@ -94,18 +95,18 @@ export async function POST(request: Request) {
       externalTxIdAlreadyUsed: false,
     });
   } catch (error) {
-    const classified = classifyFireblocksApiError(error);
+    const details = extractFireblocksApiErrorDetails(error);
     console.error("[fireblocks/transactions] vault validation failed", {
       externalTxId,
       sourceVaultId,
-      category: classified.category,
-      raw: classified.raw,
+      details,
     });
     return NextResponse.json(
       {
-        error: classified.message,
-        category: classified.category,
-        details: classified.raw,
+        error: details,
+        category: classifyFireblocksApiError(error).category,
+        details,
+        fireblocksError: details,
       },
       { status: 400 },
     );
@@ -126,6 +127,7 @@ export async function POST(request: Request) {
         error: validation.message,
         category: validation.category,
         debug: validation.debug,
+        details: validation.message,
       },
       { status: 400 },
     );
@@ -150,6 +152,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ...result, debug: validation.debug });
   } catch (error) {
+    const details = extractFireblocksApiErrorDetails(error);
     const classified = classifyFireblocksApiError(error);
     console.error("[fireblocks/transactions] submission failed", {
       externalTxId,
@@ -157,15 +160,15 @@ export async function POST(request: Request) {
       sourceVaultId,
       amount,
       destination,
-      category: classified.category,
-      raw: classified.raw,
+      details,
     });
 
     return NextResponse.json(
       {
-        error: classified.message,
+        error: details,
         category: classified.category,
-        details: classified.raw,
+        details,
+        fireblocksError: details,
         debug: validation.debug,
       },
       { status: 502 },

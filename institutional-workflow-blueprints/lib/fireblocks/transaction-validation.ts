@@ -1,3 +1,4 @@
+import { SETTLEMENT_ASSET_UNAVAILABLE } from "@/lib/fireblocks/constants";
 import type { FireblocksTreasuryState } from "@/lib/fireblocks/types";
 import type { Transfer } from "@/lib/types";
 
@@ -81,7 +82,42 @@ export function dedupeTransfersById<T extends { id: string; status: string; upda
 }
 
 export function dedupePendingTransfers(transfers: Transfer[]): Transfer[] {
-  return dedupeTransfersById(transfers).filter((transfer) => transfer.status === "PENDING_APPROVAL");
+  const pending = dedupeTransfersById(transfers).filter(
+    (transfer) => transfer.status === "PENDING_APPROVAL",
+  );
+
+  const byFingerprint = new Map<string, Transfer>();
+  for (const transfer of pending) {
+    const key = settlementFingerprint(transfer);
+    const existing = byFingerprint.get(key);
+    if (!existing || transfer.updatedAt > existing.updatedAt) {
+      byFingerprint.set(key, transfer);
+    }
+  }
+
+  return [...byFingerprint.values()].sort(
+    (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
+  );
+}
+
+function settlementFingerprint(transfer: Transfer): string {
+  const destination = transfer.destination?.trim().toLowerCase() ?? "";
+  return `${transfer.asset}|${transfer.amount}|${destination}`;
+}
+
+function resolveSourceVaultId(transfer: Transfer, treasury: FireblocksTreasuryState): string | null {
+  const fromTransfer = transfer.sourceVaultId?.trim();
+  if (fromTransfer) {
+    return fromTransfer;
+  }
+  return treasury.vault?.id?.trim() ?? null;
+}
+
+function isVaultFunded(treasury: FireblocksTreasuryState): boolean {
+  if ((treasury.sepoliaEthAvailable ?? 0) > 0) {
+    return true;
+  }
+  return treasury.assets.some((asset) => asset.available > 0);
 }
 
 function resolveAssetId(transfer: Transfer, treasury: FireblocksTreasuryState): string | null {
@@ -109,7 +145,7 @@ export function buildTransactionDebugInfo(input: {
   const matchedAsset = input.treasury?.assets.find((asset) => asset.assetId === assetId) ?? null;
 
   return {
-    sourceVaultId: input.treasury?.vault?.id ?? null,
+    sourceVaultId: input.transfer.sourceVaultId?.trim() ?? input.treasury?.vault?.id ?? null,
     assetId: assetId ?? null,
     amount: input.transfer.amount,
     destinationType: "one_time_address",
@@ -127,8 +163,28 @@ export function validateFireblocksTransaction(input: {
   externalTxIdAlreadyUsed?: boolean;
 }): FireblocksValidationResult {
   const { transfer, treasury } = input;
+  const externalTxId = transfer.id?.trim() ?? "";
+  const sourceVaultId = resolveSourceVaultId(transfer, treasury);
   const assetId = resolveAssetId(transfer, treasury);
   const debug = buildTransactionDebugInfo({ transfer, treasury, assetId });
+
+  if (!externalTxId) {
+    return {
+      ok: false,
+      category: "unknown",
+      message: "externalTxId is required before submitting to Fireblocks.",
+      debug,
+    };
+  }
+
+  if (!sourceVaultId) {
+    return {
+      ok: false,
+      category: "invalid_vault",
+      message: "sourceVaultId is required. Confirm Treasury Main vault discovery is configured.",
+      debug,
+    };
+  }
 
   if (!treasury.vault?.id) {
     return {
@@ -139,11 +195,25 @@ export function validateFireblocksTransaction(input: {
     };
   }
 
+  if (sourceVaultId !== treasury.vault.id) {
+    return {
+      ok: false,
+      category: "invalid_vault",
+      message: `sourceVaultId "${sourceVaultId}" does not match Treasury Main vault "${treasury.vault.id}".`,
+      debug: {
+        ...debug,
+        sourceVaultId,
+      },
+    };
+  }
+
   if (!assetId) {
     return {
       ok: false,
       category: "invalid_asset",
-      message: `Asset "${transfer.asset}" is not activated in Treasury Main. Activate the sandbox asset in Fireblocks first.`,
+      message: isVaultFunded(treasury)
+        ? SETTLEMENT_ASSET_UNAVAILABLE
+        : `Asset "${transfer.asset}" is not activated in Treasury Main. Activate the sandbox asset in Fireblocks first.`,
       debug,
     };
   }
@@ -162,7 +232,7 @@ export function validateFireblocksTransaction(input: {
     return {
       ok: false,
       category: "missing_destination",
-      message: VAULT_FUNDING_ERROR,
+      message: "Destination address is required before Fireblocks authorization.",
       debug,
     };
   }
@@ -178,11 +248,25 @@ export function validateFireblocksTransaction(input: {
   }
 
   const matchedAsset = treasury.assets.find((asset) => asset.assetId === assetId);
-  if (!matchedAsset || matchedAsset.available <= 0 || matchedAsset.available < transfer.amount) {
+  if (!matchedAsset || matchedAsset.available < transfer.amount) {
+    if (isVaultFunded(treasury) && (!matchedAsset || matchedAsset.available <= 0)) {
+      return {
+        ok: false,
+        category: "invalid_asset",
+        message: SETTLEMENT_ASSET_UNAVAILABLE,
+        debug: {
+          ...debug,
+          availableBalance: matchedAsset?.available ?? 0,
+        },
+      };
+    }
+
     return {
       ok: false,
       category: "missing_balance",
-      message: VAULT_FUNDING_ERROR,
+      message: matchedAsset
+        ? `Insufficient ${assetId} available balance (${matchedAsset.available}). Requested ${transfer.amount}.`
+        : VAULT_FUNDING_ERROR,
       debug: {
         ...debug,
         availableBalance: matchedAsset?.available ?? 0,
@@ -194,7 +278,7 @@ export function validateFireblocksTransaction(input: {
     return {
       ok: false,
       category: "duplicate_external_tx_id",
-      message: `Settlement ${transfer.id} already has a Fireblocks transaction record. Retry with the existing custody transaction instead of creating a duplicate.`,
+      message: `Settlement ${externalTxId} already has a Fireblocks transaction record. Retry with the existing custody transaction instead of creating a duplicate.`,
       debug,
     };
   }
@@ -202,14 +286,17 @@ export function validateFireblocksTransaction(input: {
   return {
     ok: true,
     payload: {
-      externalTxId: transfer.id,
+      externalTxId,
       assetId,
-      sourceVaultId: treasury.vault.id,
+      sourceVaultId,
       amount: transfer.amount,
       destination,
       note: transfer.reason,
     },
-    debug,
+    debug: {
+      ...debug,
+      sourceVaultId,
+    },
   };
 }
 

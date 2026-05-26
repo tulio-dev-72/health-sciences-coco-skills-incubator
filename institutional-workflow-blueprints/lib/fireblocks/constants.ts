@@ -6,6 +6,9 @@ export const SETTLEMENT_RAIL_SEPOLIA = "Ethereum Sepolia";
 export const FUNDING_REQUIRED_BEFORE_AUTHORIZATION =
   "Funding required before settlement authorization can proceed.";
 
+export const SETTLEMENT_ASSET_UNAVAILABLE =
+  "Vault funded but settlement asset unavailable.";
+
 export const SANDBOX_INFRASTRUCTURE_COPY =
   "Real Fireblocks sandbox infrastructure using test assets, not mainnet funds.";
 

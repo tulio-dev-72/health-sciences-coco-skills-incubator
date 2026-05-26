@@ -3,6 +3,7 @@ import "server-only";
 import { TransferPeerPathType } from "@fireblocks/ts-sdk";
 
 import { getFireblocksClient } from "@/lib/fireblocks/client";
+import { extractFireblocksApiErrorDetails } from "@/lib/fireblocks/errors";
 import {
   SANDBOX_INFRASTRUCTURE_COPY,
   TREASURY_MAIN_VAULT_NAME,
@@ -180,12 +181,7 @@ export async function createTransaction(
       status: response.data.status ?? "SUBMITTED",
     };
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : typeof error === "object" && error !== null && "message" in error
-          ? String((error as { message?: unknown }).message)
-          : "Fireblocks transaction submission failed.";
+    const details = extractFireblocksApiErrorDetails(error);
 
     console.error("[fireblocks/service] createTransaction failed", {
       externalTxId: input.externalTxId,
@@ -193,10 +189,10 @@ export async function createTransaction(
       sourceVaultId: input.sourceVaultId,
       amount: input.amount,
       destinationAddress: input.destinationAddress,
-      message,
+      details,
     });
 
-    throw new Error(message);
+    throw new Error(details);
   }
 }
 

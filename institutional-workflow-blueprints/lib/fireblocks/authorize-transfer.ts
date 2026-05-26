@@ -2,6 +2,7 @@
 
 import { PRIMARY_SETTLEMENT } from "@/data/primary-scenario";
 import {
+  fetchFireblocksStatus,
   fetchFireblocksTreasuryState,
   submitFireblocksTransfer,
 } from "@/lib/fireblocks/api-client";
@@ -32,11 +33,11 @@ export type AuthorizedFireblocksTransferFailure = {
 
 export async function submitAuthorizedFireblocksTransfer(
   transfer: Transfer,
-  fireblocksEnabled: boolean,
 ): Promise<AuthorizedFireblocksTransferResult> {
+  const integration = await fetchFireblocksStatus();
   const offlineDebug = buildTransactionDebugInfo({ transfer, treasury: null });
 
-  if (!fireblocksEnabled) {
+  if (integration.integrationStatus !== "connected") {
     return {
       fireblocksTxId: PRIMARY_SETTLEMENT.demoFireblocksTxId,
       fireblocksStatus: "SUBMITTED",

@@ -16,7 +16,6 @@ import {
   loadPersistedState,
   persistState,
   clearPersistedState,
-  getAvailableBalance,
   loadSessionRole,
   persistSessionRole,
   commitDemoLogin,
@@ -231,12 +230,25 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case "SYNC_FIREBLOCKS_VAULTS":
       return { ...state, vaultBalances: action.vaults };
     case "CREATE_TRANSFER": {
-      const available = getAvailableBalance(state, action.input.asset);
       if (action.input.amount <= 0) {
         return state;
       }
-      if (action.input.amount > available) {
-        return state;
+
+      const duplicatePending = state.transfers.find(
+        (transfer) =>
+          transfer.status === "PENDING_APPROVAL" &&
+          transfer.asset === action.input.asset &&
+          transfer.amount === action.input.amount &&
+          normalizeAddress(transfer.destination) === normalizeAddress(action.input.destination),
+      );
+
+      if (duplicatePending) {
+        return {
+          ...state,
+          lastTransferId: duplicatePending.id,
+          workflowStep: "policy",
+          policySummary: `${duplicatePending.id} is already pending authorization.`,
+        };
       }
 
       const now = new Date().toISOString();

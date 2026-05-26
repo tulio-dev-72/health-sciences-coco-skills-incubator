@@ -14,6 +14,7 @@ import {
   FireblocksSubmitError,
   classifyFireblocksApiError,
 } from "@/lib/fireblocks/transaction-validation";
+import { formatFireblocksSubmitErrorMessage } from "@/lib/fireblocks/errors";
 
 export async function fetchFireblocksStatus(): Promise<FireblocksStatus> {
   try {
@@ -164,13 +165,20 @@ export async function submitFireblocksTransfer(input: {
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const classified = classifyFireblocksApiError(body.error ?? body.message ?? body);
+    const payload = body as Record<string, unknown>;
+    const classified = classifyFireblocksApiError(payload.error ?? payload.message ?? payload);
+    const exactMessage = formatFireblocksSubmitErrorMessage({
+      error: payload.error ?? classified.message,
+      message: payload.message,
+      details: payload.details ?? payload.fireblocksError ?? classified.raw,
+    });
+
     throw new FireblocksSubmitError({
-      message: body.error ?? classified.message,
-      category: body.category ?? classified.category,
-      debug: body.debug,
-      raw: body.details ?? classified.raw,
-      apiResponse: body,
+      message: exactMessage,
+      category: (payload.category as FireblocksSubmitError["category"]) ?? classified.category,
+      debug: payload.debug as FireblocksSubmitError["debug"],
+      raw: String(payload.details ?? payload.fireblocksError ?? classified.raw),
+      apiResponse: payload,
     });
   }
 
