@@ -15,30 +15,46 @@ export const blueprintLibrary: Blueprint[] = [
     id: "treasury-approval",
     title: "Treasury Approval",
     description:
-      "Dual-authorization governance for high-value outbound treasury movements — orchestrate approver routing, amount thresholds, and release to Fireblocks custody.",
+      "Manager authorization queue for high-value outbound treasury movements — approver routing, threshold enforcement, and release to Fireblocks custody.",
     useCase:
       "Corporate treasury teams enforce manager sign-off and audit-ready authorization before high-value disbursements settle.",
     buyer: "Corporate treasury & CFO",
     emphasis: [
-      "Approval governance",
-      "High-value treasury controls",
-      "Authorization orchestration",
+      "High-value authorization",
+      "Treasury governance",
+      "Approval orchestration",
     ],
+    operationalMeta: {
+      settlementRail: "Ethereum (USDC)",
+      custodyLayer: "Fireblocks MPC",
+      workflowType: "Authorization Governance",
+      status: "Sandbox Ready",
+      integration: "Webhook Enabled",
+    },
+    actionLabel: "Open Authorization Queue",
   },
   {
     id: "exchange-withdrawal-review",
     title: "Exchange Withdrawal Review",
     description:
-      "Exchange-linked withdrawal review — apply policy enforcement, operational risk assessment, and institutional approval before assets leave omnibus custody.",
+      "Withdrawal review queue for exchange-linked outbound movements — policy enforcement, risk assessment, and approval before omnibus release.",
     useCase:
       "Trading desks gate withdrawals to external venues through governance review before Fireblocks signs and broadcasts.",
     buyer: "Trading desk & liquidity",
     emphasis: [
       "Exchange operations",
-      "Withdrawal governance",
+      "Withdrawal risk review",
       "Policy enforcement",
-      "Operational risk review",
+      "Operational approval lifecycle",
     ],
+    operationalMeta: {
+      settlementRail: "Ethereum (multi-asset)",
+      custodyLayer: "Fireblocks MPC",
+      workflowType: "Withdrawal Risk Review",
+      status: "Sandbox Ready",
+      integration: "Webhook Enabled",
+    },
+    actionLabel: "Review Settlement Flow",
   },
 ];
 

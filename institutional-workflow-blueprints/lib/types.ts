@@ -74,14 +74,26 @@ export type VaultAccount = VaultBalance;
 /** @deprecated Use AuditEvent */
 export type AuditLogEntry = AuditEvent;
 
+export type BlueprintOperationalMeta = {
+  settlementRail: string;
+  custodyLayer: string;
+  workflowType: string;
+  status: string;
+  integration: string;
+};
+
 export type Blueprint = {
   id: string;
   title: string;
   description: string;
   useCase: string;
   buyer: string;
-  /** Short emphasis tags shown on secondary module cards. */
+  /** Operational focus areas for secondary workflow modules. */
   emphasis?: string[];
+  /** Infrastructure metadata shown on secondary module panels. */
+  operationalMeta?: BlueprintOperationalMeta;
+  /** Primary action label for secondary modules. */
+  actionLabel?: string;
 };
 
 export type AppState = {
