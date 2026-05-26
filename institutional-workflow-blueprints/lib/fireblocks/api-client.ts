@@ -1,4 +1,6 @@
 import type { TreasuryMainFundingInfo } from "@/lib/fireblocks/funding-types";
+import { SETTLEMENT_RAIL_SEPOLIA } from "@/lib/fireblocks/constants";
+import { resolveSepoliaEthAssetId } from "@/lib/fireblocks/sepolia-eth";
 import type {
   FireblocksDepositAddress,
   FireblocksStatus,
@@ -89,18 +91,40 @@ export async function fetchTreasuryMainDepositAddress(
 }
 
 export async function fetchFireblocksTreasuryState(): Promise<FireblocksTreasuryState> {
-  const [status, assetsPayload] = await Promise.all([
+  const [status, assetsPayload, funding, webhookInfo] = await Promise.all([
     fetchFireblocksStatus(),
     fetchTreasuryMainAssets(),
+    fetchTreasuryMainFunding().catch(() => null as TreasuryMainFundingInfo | null),
+    fetchFireblocksWebhookInfo().catch(() => null),
   ]);
+
+  const webhookEndpointActive = Boolean(webhookInfo?.endpoint);
 
   if (status.integrationStatus !== "connected" || !assetsPayload) {
     return {
       ...OFFLINE_TREASURY_STATE,
       message: status.message,
       integrationStatus: status.integrationStatus,
+      basePath: status.basePath,
+      webhookEndpointActive,
     };
   }
+
+  const assets = assetsPayload.assets.map((asset) => ({
+    assetId: asset.assetId,
+    total: asset.total,
+    available: asset.available,
+    pending: asset.pending,
+    lockedAmount: asset.lockedAmount,
+    pendingOut: asset.pendingOut,
+  }));
+
+  const sepoliaEthAssetId = resolveSepoliaEthAssetId(assets);
+  const sepoliaAsset = assets.find((asset) => asset.assetId === sepoliaEthAssetId) ?? null;
+  const sepoliaEthAvailable = funding?.available ?? sepoliaAsset?.available ?? null;
+  const fundingStatus =
+    funding?.fundingStatus ??
+    (sepoliaEthAvailable !== null && sepoliaEthAvailable > 0 ? "ready" : "needs_funding");
 
   return {
     integrationStatus: "connected",
@@ -111,23 +135,16 @@ export async function fetchFireblocksTreasuryState(): Promise<FireblocksTreasury
       id: assetsPayload.vaultId,
       name: assetsPayload.vaultName,
       hiddenOnUI: false,
-      assets: assetsPayload.assets.map((asset) => ({
-        assetId: asset.assetId,
-        total: asset.total,
-        available: asset.available,
-        pending: asset.pending,
-        lockedAmount: asset.lockedAmount,
-        pendingOut: asset.pendingOut,
-      })),
+      assets,
     },
-    assets: assetsPayload.assets.map((asset) => ({
-      assetId: asset.assetId,
-      total: asset.total,
-      available: asset.available,
-      pending: asset.pending,
-      lockedAmount: asset.lockedAmount,
-      pendingOut: asset.pendingOut,
-    })),
+    assets,
+    sepoliaEthAssetId,
+    sepoliaEthAvailable,
+    depositAddress: funding?.depositAddress ?? null,
+    fundingStatus,
+    settlementRail: SETTLEMENT_RAIL_SEPOLIA,
+    basePath: status.basePath,
+    webhookEndpointActive,
   };
 }
 

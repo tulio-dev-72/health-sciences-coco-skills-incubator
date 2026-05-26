@@ -62,26 +62,18 @@ function applyVaultLedger(
 
 const stablecoinScenario: DemoScenario = {
   blueprintId: "stablecoin-payouts",
-  headline: "High-value USDC settlement — authorization required",
+  headline: "Sepolia ETH settlement — authorization required",
   queueSummary:
-    "Analyst initiates a $250,000 USDC settlement to Acme Liquidity LLC. Policy triggers high-value authorization before Fireblocks custody release.",
+    "Analyst initiates a Sepolia test ETH settlement to Acme Liquidity LLC. Policy triggers high-value authorization before Fireblocks custody release.",
   batchLabel: "Primary operational scenario",
   transfers: [],
   auditLog: [],
-  vaultBalances: [
-    {
-      asset: "USDC",
-      label: "Treasury Main",
-      balance: 12_500_000,
-      available: 12_500_000,
-      pendingOut: 0,
-    },
-  ],
+  vaultBalances: [],
   walkthrough: [
     {
       step: 1,
       title: "Initiate settlement",
-      detail: "Analyst submits $250,000 USDC to Acme Liquidity LLC on Ethereum.",
+      detail: "Analyst submits Sepolia test ETH settlement from Treasury Main.",
       href: "/demo/create",
     },
     {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireFireblocksConfigured } from "@/lib/fireblocks/route-utils";
 import { createTransaction, getVaultAccountById } from "@/lib/fireblocks/service";
+import { buildTreasuryStateFromVault } from "@/lib/fireblocks/treasury-state";
 import {
   classifyFireblocksApiError,
   validateFireblocksTransaction,
@@ -89,14 +90,7 @@ export async function POST(request: Request) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
-      treasury: {
-        integrationStatus: "connected",
-        message: "",
-        configured: true,
-        degradedMode: false,
-        vault,
-        assets: vault.assets,
-      },
+      treasury: buildTreasuryStateFromVault(vault),
       externalTxIdAlreadyUsed: false,
     });
   } catch (error) {

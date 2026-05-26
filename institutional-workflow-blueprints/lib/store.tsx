@@ -58,6 +58,7 @@ type CreateTransferInput = {
   destination: string;
   destinationLabel: string;
   reason: string;
+  sourceVaultId?: string;
   sourceVault?: string;
   settlementRail?: string;
   counterparty?: string;
@@ -252,6 +253,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         destination: action.input.destination,
         destinationLabel: action.input.destinationLabel,
         reason: action.input.reason,
+        sourceVaultId: action.input.sourceVaultId,
         sourceVault: action.input.sourceVault,
         settlementRail: action.input.settlementRail,
         counterparty: action.input.counterparty,
@@ -272,7 +274,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
           action: AUDIT_ACTIONS.settlementInitiated,
           actor: action.actor,
           role: action.role,
-          details: `${formatCurrency(transfer.amount, transfer.asset)} USDC settlement to ${transfer.counterparty ?? transfer.destinationLabel}.`,
+          details: `${formatCurrency(transfer.amount, transfer.asset)} settlement to ${transfer.counterparty ?? transfer.destinationLabel}.`,
         },
         primaryTimestamp(state, "initiated"),
       );
@@ -721,13 +723,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        const available = getAvailableBalance(state, input.asset);
-        if (input.amount > available) {
-          return {
-            ok: false,
-            error: `Insufficient ${input.asset} available balance (${available.toLocaleString()}).`,
-          };
-        }
+        // Local mock ledger balance checks removed — Fireblocks SDK validates Treasury Main at authorization.
 
         const transferId = createId("TRX");
         dispatch({

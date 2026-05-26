@@ -24,6 +24,10 @@ import { PRIMARY_BLUEPRINT_ID, PRIMARY_SETTLEMENT, WEBHOOK_LIFECYCLE_STATUSES } 
 import { FireblocksSettlementInfrastructure } from "@/components/demo/fireblocks-settlement-infrastructure";
 import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
 import { submitAuthorizedFireblocksTransfer } from "@/lib/fireblocks/authorize-transfer";
+import {
+  FUNDING_REQUIRED_BEFORE_AUTHORIZATION,
+  SETTLEMENT_RAIL_SEPOLIA,
+} from "@/lib/fireblocks/constants";
 import { useFireblocksTreasury } from "@/lib/fireblocks/use-fireblocks-treasury";
 import {
   simulateFireblocksWebhookEvent,
@@ -87,19 +91,28 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
   const canApprove = canApproveTransfers(effectiveRole);
   const activeTransfer = state.transfers.find((item) => item.id === activeTransferId);
   const displayRole = sessionReady ? effectiveRole : null;
+  const connected =
+    treasury.state.integrationStatus === "connected" && Boolean(treasury.state.vault);
+  const ethAvailable =
+    treasury.state.sepoliaEthAvailable ?? treasury.sepoliaEthAsset?.available ?? 0;
+  const needsFunding =
+    Boolean(connected) && (treasury.state.fundingStatus === "needs_funding" || ethAvailable <= 0);
+  const settlementRail = treasury.state.settlementRail || SETTLEMENT_RAIL_SEPOLIA;
 
   async function handleSubmitSettlement(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitError(null);
+
+    if (needsFunding) {
+      setSubmitError(FUNDING_REQUIRED_BEFORE_AUTHORIZATION);
+      return;
+    }
+
     setSubmitting(true);
     setActiveBlueprint(PRIMARY_BLUEPRINT_ID);
 
     const settlementAsset =
-      treasury.state.integrationStatus === "connected" && treasury.selectedAsset
-        ? treasury.selectedAsset.assetId
-        : settlement.asset;
-    const settlementVault =
-      treasury.state.vault?.name ?? settlement.sourceVault;
+      connected && treasury.selectedAsset ? treasury.selectedAsset.assetId : settlement.asset;
 
     const result = await createTransfer(
       {
@@ -108,8 +121,9 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
         destination: settlement.counterpartyAddress,
         destinationLabel: settlement.counterparty,
         reason: settlement.reason,
-        sourceVault: settlementVault,
-        settlementRail: settlement.settlementRail,
+        sourceVaultId: treasury.state.vault?.id,
+        sourceVault: treasury.state.vault?.name ?? settlement.sourceVault,
+        settlementRail,
         counterparty: settlement.counterparty,
       },
       { role: effectiveRole ?? "analyst" },
@@ -245,9 +259,9 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
               label="Settlement request"
               title="Initiate Settlement"
               subtitle={
-                treasury.state.integrationStatus === "connected" && treasury.selectedAsset
+                connected && treasury.selectedAsset
                   ? `Available ${formatCurrency(treasury.selectedAsset.available, treasury.selectedAsset.assetId)} in ${treasury.state.vault?.name ?? settlement.sourceVault}`
-                  : `Fireblocks offline / degraded mode — demo ${formatCurrency(state.vaultBalances[0]?.available ?? 0, settlement.asset)}`
+                  : "Connect Fireblocks to load Treasury Main balances from the SDK."
               }
             />
             <div className="space-y-4">
@@ -305,7 +319,7 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
                 <InputLabel htmlFor="inline-rail">Settlement Rail</InputLabel>
                 <TextInput
                   id="inline-rail"
-                  value={settlement.settlementRail}
+                  value={settlementRail}
                   readOnly
                   className="bg-ops-overlay/50"
                 />
@@ -316,12 +330,17 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
               </div>
             </div>
           </Card>
+          {needsFunding ? (
+            <Card variant="accent">
+              <p className="text-xs text-ops-warning">{FUNDING_REQUIRED_BEFORE_AUTHORIZATION}</p>
+            </Card>
+          ) : null}
           {submitError ? (
             <Card variant="accent">
               <p className="text-xs text-ops-danger">{submitError}</p>
             </Card>
           ) : null}
-          <PrimaryButton type="submit" className="w-full" disabled={submitting}>
+          <PrimaryButton type="submit" className="w-full" disabled={submitting || needsFunding}>
             {submitting ? "Evaluating policy…" : "Submit Settlement"}
           </PrimaryButton>
         </form>

@@ -1,14 +1,15 @@
 import type { VaultBalance } from "@/lib/types";
+import { SETTLEMENT_RAIL_SEPOLIA } from "@/lib/fireblocks/constants";
 
 export const PRIMARY_BLUEPRINT_ID = "stablecoin-payouts";
 
 export const PRIMARY_SETTLEMENT = {
-  asset: "USDC",
-  amount: 250_000,
+  asset: "ETH_TEST5",
+  amount: 0.001,
   sourceVault: "Treasury Main",
   counterparty: "Acme Liquidity LLC",
   counterpartyAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-  settlementRail: "Ethereum",
+  settlementRail: SETTLEMENT_RAIL_SEPOLIA,
   reason: "Vendor settlement",
   policyTrigger: "High-Value Authorization",
   requiredApprover: "Treasury Manager",
@@ -32,15 +33,7 @@ export const WEBHOOK_LIFECYCLE_STATUSES = [
 ] as const;
 
 export function getPrimaryVaultBalances(): VaultBalance[] {
-  return [
-    {
-      asset: PRIMARY_SETTLEMENT.asset,
-      label: PRIMARY_SETTLEMENT.sourceVault,
-      balance: 12_500_000,
-      available: 12_500_000,
-      pendingOut: 0,
-    },
-  ];
+  return [];
 }
 
 export function isPrimaryBlueprint(blueprintId: string | null | undefined): boolean {

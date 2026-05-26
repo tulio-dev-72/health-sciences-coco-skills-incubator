@@ -1,7 +1,7 @@
-import type { AppState, UserRole } from "@/lib/types";
-import { defaultPolicy, getFireblocksDemoVaultBalances } from "@/data/initial-data";
+import type { AppState, UserRole, VaultBalance } from "@/lib/types";
+import { defaultPolicy } from "@/data/initial-data";
 import { DEFAULT_BLUEPRINT_ID } from "@/data/demo-guide";
-import { getPrimaryVaultBalances, PRIMARY_BLUEPRINT_ID } from "@/data/primary-scenario";
+import { PRIMARY_BLUEPRINT_ID } from "@/data/primary-scenario";
 import { applyDemoScenario } from "@/data/demo-scenarios";
 import { normalizeWorkflowStep } from "@/lib/workflow";
 
@@ -164,7 +164,7 @@ function stripLegacyDemoData(state: AppState): AppState {
     ...state,
     transfers: [],
     auditLog: state.auditLog.filter((event) => !event.details.includes("TRX-DEMO-001")),
-    vaultBalances: getFireblocksDemoVaultBalances(),
+    vaultBalances: [],
     fireblocksEnabled: true,
   };
 }
@@ -177,10 +177,7 @@ function withDemoPendingIfEmpty(state: AppState): AppState {
   }
 
   const blueprintId = base.activeBlueprint ?? DEFAULT_BLUEPRINT_ID;
-  const defaultVaults =
-    blueprintId === PRIMARY_BLUEPRINT_ID
-      ? getPrimaryVaultBalances()
-      : getFireblocksDemoVaultBalances();
+  const defaultVaults: VaultBalance[] = [];
   const seeded = applyDemoScenario(
     {
       transfers: [],
@@ -202,7 +199,7 @@ export function reseedDemoForBlueprint(state: AppState, blueprintId: string): Ap
     {
       transfers: [],
       auditLog: [],
-      vaultBalances: getFireblocksDemoVaultBalances(),
+      vaultBalances: [],
     },
     blueprintId,
   );
@@ -230,7 +227,7 @@ export function createEmptyState(): AppState {
     policy: defaultPolicy,
     transfers: [],
     auditLog: [],
-    vaultBalances: getFireblocksDemoVaultBalances(),
+    vaultBalances: [],
     fireblocksEnabled: false,
   });
 }
@@ -269,7 +266,7 @@ export function loadPersistedState(): AppState | null {
       vaultBalances:
         parsed.vaultBalances?.length > 0
           ? parsed.vaultBalances.map((vault) => ({ ...vault }))
-          : getFireblocksDemoVaultBalances(),
+          : [],
       fireblocksEnabled: parsed.fireblocksEnabled ?? true,
     });
   } catch {

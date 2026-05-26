@@ -100,6 +100,14 @@ export type FireblocksTreasuryState = {
   vault: FireblocksVaultAccount | null;
   assets: FireblocksVaultAsset[];
   degradedMode: boolean;
+  /** Resolved Sepolia ETH asset from Fireblocks vault discovery. */
+  sepoliaEthAssetId: string | null;
+  sepoliaEthAvailable: number | null;
+  depositAddress: string | null;
+  fundingStatus: "ready" | "needs_funding" | null;
+  settlementRail: string;
+  basePath: string | null;
+  webhookEndpointActive: boolean;
 };
 
 export const OFFLINE_FIREBLOCKS_STATUS: FireblocksStatus = {
@@ -122,4 +130,11 @@ export const OFFLINE_TREASURY_STATE: FireblocksTreasuryState = {
   vault: null,
   assets: [],
   degradedMode: true,
+  sepoliaEthAssetId: null,
+  sepoliaEthAvailable: null,
+  depositAddress: null,
+  fundingStatus: null,
+  settlementRail: "Ethereum Sepolia",
+  basePath: null,
+  webhookEndpointActive: false,
 };

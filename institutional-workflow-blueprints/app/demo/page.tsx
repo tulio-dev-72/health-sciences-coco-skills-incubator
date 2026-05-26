@@ -6,10 +6,10 @@ import { DemoGuideCard, UseCaseContextCard } from "@/components/demo/demo-guide-
 import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
 import { OpsCommandCard } from "@/components/demo/ops-command-card";
 import { PoweredByFireblocksCard } from "@/components/demo/powered-by-fireblocks-card";
+import { TreasuryMainVaultCard } from "@/components/demo/treasury-main-vault-card";
 import { TransferCard } from "@/components/demo/transfer-card";
 import { APP_TERMS } from "@/data/infrastructure-mapping";
 import { Card, SectionHeader, StatTile } from "@/components/ui/primitives";
-import { formatCurrency } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 
 export default function DemoDashboardPage() {
@@ -84,35 +84,9 @@ export default function DemoDashboardPage() {
           <SectionHeader
             label="Custody"
             title={APP_TERMS.vaultAccounts}
-            subtitle="Available liquidity in Fireblocks custody."
+            subtitle="Treasury Main balances from Fireblocks SDK — not mock ledger data."
           />
-          <div className="space-y-2">
-            {state.vaultBalances.map((vault) => (
-              <Card key={`${vault.asset}-${vault.label}`} variant="elevated">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-wide text-ops-text-dim">
-                      {vault.label}
-                    </p>
-                    <h3 className="mt-0.5 text-base font-semibold tabular-nums text-ops-text">
-                      {formatCurrency(vault.available, vault.asset)}
-                    </h3>
-                    <p className="text-[11px] text-ops-text-secondary">
-                      Total {formatCurrency(vault.balance, vault.asset)}
-                    </p>
-                  </div>
-                  <span className="rounded-md bg-ops-primary-muted px-1.5 py-0.5 font-mono text-[10px] text-ops-primary ring-1 ring-ops-primary/10">
-                    {vault.asset}
-                  </span>
-                </div>
-                {vault.pendingOut > 0 ? (
-                  <p className="mt-2 border-t border-ops-border-subtle pt-2 text-[11px] text-ops-warning">
-                    {formatCurrency(vault.pendingOut, vault.asset)} held pending authorization
-                  </p>
-                ) : null}
-              </Card>
-            ))}
-          </div>
+          <TreasuryMainVaultCard />
         </section>
 
         {riskAlerts.length > 0 ? (

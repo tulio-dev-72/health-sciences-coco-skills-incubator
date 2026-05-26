@@ -20,6 +20,8 @@ export type Transfer = {
   destination: string;
   destinationLabel: string;
   reason: string;
+  /** Fireblocks vault account ID for source custody. */
+  sourceVaultId?: string;
   sourceVault?: string;
   settlementRail?: string;
   counterparty?: string;
