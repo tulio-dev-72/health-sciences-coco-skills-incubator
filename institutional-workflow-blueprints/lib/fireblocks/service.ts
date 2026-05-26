@@ -12,6 +12,13 @@ import {
   getFireblocksIntegrationStatus,
   isFireblocksConfigured,
 } from "@/lib/fireblocks/config";
+import {
+  getConfiguredSepoliaEthAssetId,
+  getSepoliaEthAssetLabel,
+  resolveSepoliaEthAssetId,
+  SEPOLIA_ETH_FAUCET_URL,
+} from "@/lib/fireblocks/sepolia-eth";
+import type { TreasuryMainFundingInfo } from "@/lib/fireblocks/funding-types";
 import { mapSupportedAsset, mapVaultAccount, mapVaultAsset } from "@/lib/fireblocks/mappers";
 import type {
   FireblocksCreateTransactionInput,
@@ -209,6 +216,48 @@ export async function getTransactionStatus(
     amount: tx.amountInfo?.amount ?? tx.amount?.toString() ?? null,
     sourceVaultId: tx.source?.id ?? null,
     updatedAt: tx.lastUpdated ? new Date(tx.lastUpdated).toISOString() : new Date().toISOString(),
+  };
+}
+
+export async function getTreasuryMainFundingInfo(): Promise<TreasuryMainFundingInfo> {
+  const vault = await getTreasuryMainVault();
+  if (!vault) {
+    throw new Error(
+      `Vault "${TREASURY_MAIN_VAULT_NAME}" was not found in Fireblocks sandbox.`,
+    );
+  }
+
+  const assets = await listVaultAssets(vault.id);
+  let assetId = resolveSepoliaEthAssetId(assets);
+
+  if (!assetId) {
+    assetId = getConfiguredSepoliaEthAssetId() ?? "ETH_TEST5";
+  }
+
+  let assetBalance = assets.find((asset) => asset.assetId === assetId) ?? null;
+
+  if (!assetBalance) {
+    const fireblocks = getFireblocksClient();
+    await fireblocks.vaults.activateAssetForVaultAccount({
+      vaultAccountId: vault.id,
+      assetId,
+    });
+    assetBalance = await getVaultAsset(vault.id, assetId);
+  }
+
+  const deposit = await getDepositAddress(vault.id, assetId);
+  const balance = assetBalance.available;
+
+  return {
+    vaultId: vault.id,
+    vaultName: vault.name,
+    assetId,
+    assetLabel: getSepoliaEthAssetLabel(assetId),
+    balance: assetBalance.total,
+    available: assetBalance.available,
+    depositAddress: deposit.address,
+    fundingStatus: balance > 0 ? "ready" : "needs_funding",
+    faucetUrl: SEPOLIA_ETH_FAUCET_URL,
   };
 }
 

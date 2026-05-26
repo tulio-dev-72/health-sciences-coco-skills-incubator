@@ -1,3 +1,4 @@
+import type { TreasuryMainFundingInfo } from "@/lib/fireblocks/funding-types";
 import type {
   FireblocksDepositAddress,
   FireblocksStatus,
@@ -62,6 +63,15 @@ export async function fetchTreasuryMainAssets(): Promise<{
     return null;
   }
   return response.json();
+}
+
+export async function fetchTreasuryMainFunding(): Promise<TreasuryMainFundingInfo> {
+  const response = await fetch("/api/fireblocks/treasury-main/funding", { cache: "no-store" });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.error ?? "Unable to load Treasury Main funding details.");
+  }
+  return body as TreasuryMainFundingInfo;
 }
 
 export async function fetchTreasuryMainDepositAddress(

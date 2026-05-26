@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DemoTopBar } from "@/components/demo/top-bar";
+import { FundTreasuryMainPanel } from "@/components/demo/fund-treasury-main-panel";
 import { FireblocksSettlementInfrastructure } from "@/components/demo/fireblocks-settlement-infrastructure";
 import { ConnectedWorkflowStepper } from "@/components/demo/connected-workflow-stepper";
 import { Card, InputLabel, PrimaryButton, SectionHeader, TextInput } from "@/components/ui/primitives";
@@ -59,8 +60,9 @@ export default function CreateTransferPage() {
       />
       <ConnectedWorkflowStepper />
 
-      <main className="px-3 py-3">
+      <main className="space-y-3 px-3 py-3">
         <form onSubmit={handleSubmit} className="space-y-3">
+          <FundTreasuryMainPanel />
           <FireblocksSettlementInfrastructure treasury={treasury} amount={settlement.amount} />
 
           <Card variant="elevated">

@@ -13,6 +13,7 @@ import {
   TextInput,
 } from "@/components/ui/primitives";
 import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
+import { FundTreasuryMainPanel } from "@/components/demo/fund-treasury-main-panel";
 import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
 import { FireblocksIntegrationPanel } from "@/components/demo/fireblocks-panel";
 import { canManagePolicy } from "@/lib/policy";
@@ -147,6 +148,8 @@ export default function SettingsPage() {
         </Card>
 
         <MpcCustodyBoundaryPanel compact />
+
+        <FundTreasuryMainPanel />
 
         <FireblocksIntegrationPanel />
 
