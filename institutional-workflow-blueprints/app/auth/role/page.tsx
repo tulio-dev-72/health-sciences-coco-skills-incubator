@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { Card, PrimaryButton, SectionHeader } from "@/components/ui/primitives";
-import { getRoleLabel } from "@/lib/store";
+import { getRoleDestination } from "@/lib/auth/role-destinations";
+import { getRoleLabel } from "@/lib/auth/role-labels";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { upsertUserProfile } from "@/lib/supabase/profiles";
 import type { UserRole } from "@/lib/types";
@@ -33,7 +35,7 @@ export default function RoleSelectionPage() {
   }, [isSupabaseAuth, user, loading, router]);
 
   if (loading || !isSupabaseAuth || !user) {
-    return null;
+    return <PageLoadingState label="Loading role selection…" />;
   }
 
   async function handleSelectRole(role: UserRole) {
@@ -54,7 +56,7 @@ export default function RoleSelectionPage() {
       }
 
       await refreshSession();
-      router.push("/");
+      router.push(getRoleDestination(role));
       router.refresh();
     } catch (selectError) {
       setError(selectError instanceof Error ? selectError.message : "Unable to save role.");

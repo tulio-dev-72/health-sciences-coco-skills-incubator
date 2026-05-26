@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { InfrastructureOverview } from "@/components/auth/infrastructure-overview";
 import { IntegrationStatusBadge } from "@/components/ui/badges";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { SecondaryButton } from "@/components/ui/primitives";
 import {
   ACCESS_PORTAL_SUBTITLE,
@@ -13,25 +14,29 @@ import {
   SANDBOX_FOOTER_NOTE,
   SANDBOX_ROLES,
 } from "@/data/sandbox-roles";
+import { isUserRole } from "@/lib/auth/role-labels";
+import { prepareSandboxSession, resolveSandboxNavigation } from "@/lib/auth/prepare-sandbox-session";
 import { launchSandboxRole } from "@/lib/auth/sandbox-login";
 import { fetchFireblocksStatus } from "@/lib/fireblocks/api-client";
 import { useAppStore } from "@/lib/store";
-import { OPERATIONS_HOME } from "@/lib/supabase/routes";
 import type { UserRole } from "@/lib/types";
 
 export function AccessPortal() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") ?? OPERATIONS_HOME;
+  const requestedNext = searchParams.get("next");
   const { user, profile, loading, isSupabaseAuth, isDemoMode, refreshSession } = useAuth();
-  const { effectiveRole, setRole, sessionReady } = useAppStore();
+  const { effectiveRole, setRole, setActiveBlueprint, setWorkflowStep, sessionReady } = useAppStore();
   const [busyRole, setBusyRole] = useState<UserRole | null>(null);
+  const [entering, setEntering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [integrationStatus, setIntegrationStatus] = useState<"connected" | "offline">("offline");
 
-  const hasOperationalAccess = isSupabaseAuth
-    ? Boolean(user && profile?.role)
-    : Boolean(effectiveRole);
+  const activeRole: UserRole | null = isSupabaseAuth
+    ? profile?.role && isUserRole(profile.role)
+      ? profile.role
+      : effectiveRole
+    : effectiveRole;
 
   useEffect(() => {
     void fetchFireblocksStatus()
@@ -44,42 +49,51 @@ export function AccessPortal() {
   }, []);
 
   useEffect(() => {
-    if (!loading && sessionReady && hasOperationalAccess) {
-      router.replace(nextPath);
-    }
-  }, [loading, sessionReady, hasOperationalAccess, nextPath, router]);
-
-  async function handleEnter(role: UserRole) {
-    setBusyRole(role);
-    setError(null);
-
-    const result = await launchSandboxRole(role, {
-      isSupabaseAuth,
-      isDemoMode,
-      refreshSession,
-    });
-
-    if (!result.ok) {
-      setError(result.error);
-      setBusyRole(null);
+    if (loading || !sessionReady || busyRole || entering) {
       return;
     }
 
-    if (isDemoMode) {
-      setRole(role);
+    if (activeRole) {
+      router.replace(resolveSandboxNavigation(activeRole, requestedNext));
     }
+  }, [loading, sessionReady, activeRole, busyRole, entering, requestedNext, router]);
 
-    router.push(nextPath);
-    router.refresh();
-    setBusyRole(null);
+  async function handleEnter(role: UserRole) {
+    setBusyRole(role);
+    setEntering(true);
+    setError(null);
+
+    try {
+      const result = await launchSandboxRole(role, {
+        isSupabaseAuth,
+        isDemoMode,
+        refreshSession,
+      });
+
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
+      prepareSandboxSession(result.role, {
+        setRole,
+        setActiveBlueprint,
+        setWorkflowStep,
+      });
+
+      const destination = resolveSandboxNavigation(result.role, requestedNext);
+      router.push(destination);
+      router.refresh();
+    } catch (enterError) {
+      setError(enterError instanceof Error ? enterError.message : "Unable to enter sandbox.");
+    } finally {
+      setBusyRole(null);
+      setEntering(false);
+    }
   }
 
-  if (loading || (sessionReady && hasOperationalAccess)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-ops-bg">
-        <div className="h-8 w-32 animate-pulse rounded-lg bg-ops-overlay" aria-label="Loading" />
-      </div>
-    );
+  if (loading || !sessionReady || entering || (activeRole && !busyRole)) {
+    return <PageLoadingState label="Entering operational workspace…" />;
   }
 
   return (
@@ -142,7 +156,7 @@ export function AccessPortal() {
           </div>
 
           <div className="mt-6">
-            <InfrastructureOverview compact />
+            <InfrastructureOverview compact fireblocksConnected={integrationStatus === "connected"} />
           </div>
         </div>
 

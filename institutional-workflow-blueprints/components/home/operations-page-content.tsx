@@ -12,9 +12,11 @@ import { SectionHeader, PrimaryButton } from "@/components/ui/primitives";
 import { blueprintLibrary } from "@/data/initial-data";
 import { PRIMARY_BLUEPRINT_ID } from "@/data/primary-scenario";
 import { useAuth } from "@/components/auth/auth-provider";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { getRoleLabel } from "@/lib/auth/role-labels";
 import { useAppStore } from "@/lib/store";
-import { ACCESS_PORTAL, AUTH_ROLE, buildSignInUrl } from "@/lib/supabase/routes";
+import { getRoleDestination } from "@/lib/auth/role-destinations";
+import { ACCESS_PORTAL, AUTH_ROLE, OPERATIONS_HOME, buildSignInUrl } from "@/lib/supabase/routes";
 
 function OperationsPageInner() {
   const router = useRouter();
@@ -89,6 +91,10 @@ function OperationsPageInner() {
 
   const displayRole = isSupabaseAuth ? profile?.role ?? null : effectiveRole;
 
+  if (loading || !sessionReady) {
+    return <PageLoadingState label="Loading operations console…" />;
+  }
+
   return (
     <div className="min-h-screen bg-ops-bg text-ops-text">
       <AppHeader
@@ -150,7 +156,7 @@ function OperationsPageInner() {
 
 export function OperationsPageContent() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PageLoadingState label="Loading operations console…" />}>
       <OperationsPageInner />
     </Suspense>
   );

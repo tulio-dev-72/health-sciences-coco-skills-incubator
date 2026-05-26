@@ -8,10 +8,10 @@ import {
   buildSignInUrl,
   isPublicAuthPath,
   isRoleSelectionPath,
-  OPERATIONS_HOME,
   requiresAuth,
   requiresRole,
 } from "@/lib/supabase/routes";
+import { getRoleDestination } from "@/lib/auth/role-destinations";
 import { getSupabasePublicConfig, isDemoModeEnabled, isSupabaseConfigured } from "@/lib/supabase/config";
 
 const VALID_DEMO_ROLES = new Set(["analyst", "treasury_manager", "admin"]);
@@ -49,8 +49,9 @@ export async function updateSupabaseSession(request: NextRequest) {
     }
 
     if (pathname === ACCESS_PORTAL && demoRole && VALID_DEMO_ROLES.has(demoRole)) {
+      const destination = getRoleDestination(demoRole as "analyst" | "treasury_manager" | "admin");
       const operationsUrl = request.nextUrl.clone();
-      operationsUrl.pathname = OPERATIONS_HOME;
+      operationsUrl.pathname = destination;
       operationsUrl.search = "";
       return NextResponse.redirect(operationsUrl);
     }
@@ -97,9 +98,9 @@ export async function updateSupabaseSession(request: NextRequest) {
 
   if (user && pathname === ACCESS_PORTAL) {
     const role = await fetchProfileRole(supabase, user.id);
-    if (role) {
+    if (role && VALID_DEMO_ROLES.has(role)) {
       const operationsUrl = request.nextUrl.clone();
-      operationsUrl.pathname = OPERATIONS_HOME;
+      operationsUrl.pathname = getRoleDestination(role as "analyst" | "treasury_manager" | "admin");
       operationsUrl.search = "";
       return NextResponse.redirect(operationsUrl);
     }
@@ -109,7 +110,10 @@ export async function updateSupabaseSession(request: NextRequest) {
     const role = await fetchProfileRole(supabase, user.id);
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.search = "";
-    redirectUrl.pathname = role ? OPERATIONS_HOME : AUTH_ROLE;
+    redirectUrl.pathname =
+      role && VALID_DEMO_ROLES.has(role)
+        ? getRoleDestination(role as "analyst" | "treasury_manager" | "admin")
+        : AUTH_ROLE;
     return NextResponse.redirect(redirectUrl);
   }
 
@@ -117,7 +121,7 @@ export async function updateSupabaseSession(request: NextRequest) {
     const role = await fetchProfileRole(supabase, user.id);
     if (role) {
       const operationsUrl = request.nextUrl.clone();
-      operationsUrl.pathname = OPERATIONS_HOME;
+      operationsUrl.pathname = getRoleDestination(role as "analyst" | "treasury_manager" | "admin");
       operationsUrl.search = "";
       return NextResponse.redirect(operationsUrl);
     }

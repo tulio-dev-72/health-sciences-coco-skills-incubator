@@ -1,17 +1,31 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { DemoBottomNav } from "@/components/demo/bottom-nav";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { useFireblocksStatusSync } from "@/lib/fireblocks/use-fireblocks-status-sync";
+import { ACCESS_PORTAL } from "@/lib/supabase/routes";
 import { useAppStore } from "@/lib/store";
 
 export default function DemoLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { sessionReady, effectiveRole } = useAppStore();
   const isLoginPage = pathname === "/demo/login";
   const showShell = sessionReady && effectiveRole !== null && !isLoginPage;
 
   useFireblocksStatusSync();
+
+  useEffect(() => {
+    if (sessionReady && !effectiveRole && !isLoginPage) {
+      router.replace(ACCESS_PORTAL);
+    }
+  }, [sessionReady, effectiveRole, isLoginPage, router]);
+
+  if (!sessionReady || (!effectiveRole && !isLoginPage)) {
+    return <PageLoadingState label="Loading operational workspace…" />;
+  }
 
   return (
     <div className="min-h-screen bg-ops-bg">
