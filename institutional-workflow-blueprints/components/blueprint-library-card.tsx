@@ -26,9 +26,9 @@ export function BlueprintLibraryCard({
       variant="accent"
       className="flex h-full flex-col shadow-[var(--ops-shadow-md)] ring-1 ring-ops-primary/15"
     >
-      <span className="mb-2 inline-flex w-fit rounded-md bg-ops-primary-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-ops-primary">
-        Primary operational scenario
-      </span>
+        <span className="mb-2 inline-flex w-fit rounded-md bg-ops-primary-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-ops-primary">
+          Active settlement workflow
+        </span>
       <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-dim">
         {blueprint.buyer}
       </p>
@@ -50,7 +50,7 @@ export function BlueprintLibraryCard({
           onStartPrimaryWorkflow?.();
         }}
       >
-        Start USDC Settlement Workflow
+          Open settlement workflow
       </PrimaryButton>
     </Card>
   );

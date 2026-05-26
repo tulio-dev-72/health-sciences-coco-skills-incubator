@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { Suspense, useCallback, useState } from "react";
-import { LaunchOperationalSandbox } from "@/components/auth/launch-operational-sandbox";
 import { BlueprintLibraryCard } from "@/components/blueprint-library-card";
 import { SecondaryModulesSection } from "@/components/home/secondary-modules-section";
 import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
@@ -13,9 +12,11 @@ import { SectionHeader, PrimaryButton } from "@/components/ui/primitives";
 import { blueprintLibrary } from "@/data/initial-data";
 import { PRIMARY_BLUEPRINT_ID } from "@/data/primary-scenario";
 import { useAuth } from "@/components/auth/auth-provider";
+import { getRoleLabel } from "@/lib/auth/role-labels";
 import { useAppStore } from "@/lib/store";
+import { ACCESS_PORTAL, AUTH_ROLE, buildSignInUrl } from "@/lib/supabase/routes";
 
-function HomePageInner() {
+function OperationsPageInner() {
   const router = useRouter();
   const { user, profile, loading, isSupabaseAuth, isDemoMode } = useAuth();
   const { setActiveBlueprint, setRole, setWorkflowStep, effectiveRole, sessionReady } =
@@ -32,11 +33,11 @@ function HomePageInner() {
 
     if (isSupabaseAuth) {
       if (!user) {
-        router.push("/auth/sign-in?next=/");
+        router.push(buildSignInUrl("/operations"));
         return false;
       }
       if (!profile?.role) {
-        router.push("/auth/role");
+        router.push(AUTH_ROLE);
         return false;
       }
       return true;
@@ -44,13 +45,13 @@ function HomePageInner() {
 
     if (isDemoMode) {
       if (!effectiveRole) {
-        router.push("/demo/login?next=/");
+        router.push(ACCESS_PORTAL);
         return false;
       }
       return true;
     }
 
-    router.push("/auth/sign-in?next=/");
+    router.push(ACCESS_PORTAL);
     return false;
   }, [
     sessionReady,
@@ -63,7 +64,7 @@ function HomePageInner() {
     router,
   ]);
 
-  const startPrimaryWorkflow = useCallback(() => {
+  const openSettlementWorkflow = useCallback(() => {
     if (!ensureWorkflowAccess()) {
       return;
     }
@@ -86,7 +87,7 @@ function HomePageInner() {
     profile?.role,
   ]);
 
-  const isAuthenticated = isSupabaseAuth ? Boolean(user) : Boolean(effectiveRole);
+  const displayRole = isSupabaseAuth ? profile?.role ?? null : effectiveRole;
 
   return (
     <div className="min-h-screen bg-ops-bg text-ops-text">
@@ -97,11 +98,10 @@ function HomePageInner() {
             <PrimaryButton
               type="button"
               className="w-full sm:w-auto"
-              onClick={startPrimaryWorkflow}
+              onClick={openSettlementWorkflow}
               disabled={loading}
             >
-              <span className="sm:hidden">Start workflow</span>
-              <span className="hidden sm:inline">Start USDC Settlement Workflow</span>
+              Open settlement workflow
             </PrimaryButton>
           ) : null
         }
@@ -113,9 +113,13 @@ function HomePageInner() {
         ) : (
           <>
             <SectionHeader
-              label="Operational scenario"
-              title="High-value USDC settlement authorization"
-              subtitle="Workflow Layer → Fireblocks MPC Custody Layer → Blockchain Settlement Rail. This app orchestrates enterprise workflow — Fireblocks provides MPC-secured custody and signing."
+              label="Operations console"
+              title="Settlement authorization workspace"
+              subtitle={
+                displayRole
+                  ? `Active session: ${getRoleLabel(displayRole)} · USDC settlement governance on Fireblocks infrastructure`
+                  : "USDC settlement governance on Fireblocks infrastructure"
+              }
             />
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
@@ -123,7 +127,7 @@ function HomePageInner() {
                 <BlueprintLibraryCard
                   blueprint={primaryBlueprint}
                   variant="primary"
-                  onStartPrimaryWorkflow={startPrimaryWorkflow}
+                  onStartPrimaryWorkflow={openSettlementWorkflow}
                 />
               ) : null}
 
@@ -131,12 +135,8 @@ function HomePageInner() {
             </div>
 
             <div className="mt-8 space-y-4 border-t border-ops-border-subtle pt-8">
-              {!isAuthenticated && !workflowActive ? (
-                <LaunchOperationalSandbox nextPath="/" />
-              ) : null}
-
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ops-text-dim">
-                Infrastructure reference
+                Architecture reference
               </p>
               <InfrastructureMappingCard compact />
               <DemoWorkflowGuide />
@@ -148,10 +148,10 @@ function HomePageInner() {
   );
 }
 
-export function HomePageContent() {
+export function OperationsPageContent() {
   return (
     <Suspense fallback={null}>
-      <HomePageInner />
+      <OperationsPageInner />
     </Suspense>
   );
 }

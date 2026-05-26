@@ -2,6 +2,8 @@ export const AUTH_SIGN_IN = "/auth/sign-in";
 export const AUTH_SIGN_UP = "/auth/sign-up";
 export const AUTH_ROLE = "/auth/role";
 export const DEMO_LOGIN = "/demo/login";
+export const ACCESS_PORTAL = "/";
+export const OPERATIONS_HOME = "/operations";
 
 export function isApiPath(pathname: string): boolean {
   return pathname.startsWith("/api/");
@@ -11,9 +13,13 @@ export function isPublicAuthPath(pathname: string): boolean {
   return pathname === AUTH_SIGN_IN || pathname === AUTH_SIGN_UP;
 }
 
-/** Public marketing / story pages — no session required. */
+export function isAccessPortalPath(pathname: string): boolean {
+  return pathname === ACCESS_PORTAL;
+}
+
+/** Public entry and auth pages — no session required. */
 export function isPublicPath(pathname: string): boolean {
-  return pathname === "/" || isPublicAuthPath(pathname);
+  return isAccessPortalPath(pathname) || isPublicAuthPath(pathname) || pathname === DEMO_LOGIN;
 }
 
 export function isRoleSelectionPath(pathname: string): boolean {

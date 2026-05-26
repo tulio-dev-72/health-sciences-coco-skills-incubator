@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { RoleBadge, LiveBadge } from "@/components/ui/badges";
+import { ACCESS_PORTAL } from "@/lib/supabase/routes";
 import { getRoleLabel, useAppStore } from "@/lib/store";
 
 const shellMaxWidth = "max-w-lg md:max-w-2xl xl:max-w-4xl";
@@ -39,17 +40,18 @@ export function DemoTopBar({
           <p className="text-[10px] text-ops-text-dim">{displayName}</p>
           <div className="flex gap-3 sm:flex-col sm:gap-1">
             <Link
-              href="/demo/login"
+              href={ACCESS_PORTAL}
+              onClick={clearRole}
               className="inline-flex min-h-11 items-center text-[11px] font-medium text-ops-text-secondary hover:text-ops-primary"
             >
               Switch role
             </Link>
             <Link
-              href="/"
+              href={ACCESS_PORTAL}
               onClick={clearRole}
               className="inline-flex min-h-11 items-center text-[11px] text-ops-text-dim hover:text-ops-text-secondary"
             >
-              Exit
+              End session
             </Link>
           </div>
         </div>

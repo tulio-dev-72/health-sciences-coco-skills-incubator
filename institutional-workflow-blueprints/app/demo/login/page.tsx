@@ -1,56 +1,26 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { LaunchOperationalSandbox } from "@/components/auth/launch-operational-sandbox";
-import { isDemoModeEnabled } from "@/lib/supabase/config";
-import { useAuth } from "@/components/auth/auth-provider";
-import { Card } from "@/components/ui/primitives";
-import Link from "next/link";
+import { ACCESS_PORTAL, OPERATIONS_HOME } from "@/lib/supabase/routes";
 
-function DemoLoginInner() {
+function DemoLoginRedirect() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/";
-  const { isDemoMode, isSupabaseAuth, loading } = useAuth();
+  const next = searchParams.get("next") ?? OPERATIONS_HOME;
 
   useEffect(() => {
-    if (!loading && isSupabaseAuth && !isDemoMode) {
-      router.replace("/auth/sign-in");
-    }
-  }, [isSupabaseAuth, isDemoMode, loading, router]);
+    const target = next === OPERATIONS_HOME ? ACCESS_PORTAL : `${ACCESS_PORTAL}?next=${encodeURIComponent(next)}`;
+    router.replace(target);
+  }, [router, next]);
 
-  if (loading || (isSupabaseAuth && !isDemoMode)) {
-    return null;
-  }
-
-  if (!isDemoModeEnabled()) {
-    return (
-      <div className="px-3 py-4">
-        <Card variant="accent">
-          <p className="text-xs text-ops-text-secondary">
-            Operational sandbox is disabled in this environment.
-          </p>
-          <Link href="/auth/sign-in" className="mt-2 inline-block text-xs font-medium text-ops-primary">
-            Authenticate →
-          </Link>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="px-3 py-4">
-      <LaunchOperationalSandbox nextPath={next} />
-    </div>
-  );
+  return null;
 }
 
 export default function DemoLoginPage() {
   return (
     <Suspense fallback={null}>
-      <DemoLoginInner />
+      <DemoLoginRedirect />
     </Suspense>
   );
 }

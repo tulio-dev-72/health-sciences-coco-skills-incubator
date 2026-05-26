@@ -1,5 +1,10 @@
-import { HomePageContent } from "@/components/home/home-page-content";
+import { Suspense } from "react";
+import { AccessPortal } from "@/components/auth/access-portal";
 
-export default function HomePage() {
-  return <HomePageContent />;
+export default function AccessPortalPage() {
+  return (
+    <Suspense fallback={null}>
+      <AccessPortal />
+    </Suspense>
+  );
 }

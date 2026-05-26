@@ -9,28 +9,36 @@ export type SandboxRoleDefinition = {
   actionLabel: string;
 };
 
+export const ACCESS_PORTAL_TITLE = "Treasury Control Center";
+
+export const ACCESS_PORTAL_SUBTITLE =
+  "Operational sandbox for institutional stablecoin settlement governance built around Fireblocks infrastructure.";
+
+export const SANDBOX_FOOTER_NOTE =
+  "Sandbox environment using Fireblocks test infrastructure and test settlement assets.";
+
 export const SANDBOX_ROLES: SandboxRoleDefinition[] = [
   {
     role: "analyst",
     title: "Treasury Analyst",
-    description: "Initiates high-value USDC settlement requests and operational reviews.",
-    responsibility: "Settlement request initiation · policy review input",
-    actionLabel: "Launch as Analyst",
+    description: "Initiates and reviews high-value settlement workflows.",
+    responsibility: "Settlement request initiation · operational review",
+    actionLabel: "Enter as Analyst",
   },
   {
     role: "treasury_manager",
     title: "Treasury Manager",
     description:
-      "Authorizes settlement workflows and releases transactions to Fireblocks custody infrastructure.",
-    responsibility: "Authorization queue · custody release approval",
-    actionLabel: "Launch as Manager",
+      "Authorizes settlement requests and releases transactions to Fireblocks infrastructure.",
+    responsibility: "Authorization queue · custody release",
+    actionLabel: "Enter as Manager",
   },
   {
     role: "admin",
     title: "Platform Admin",
-    description: "Manages governance controls, policies, and integration configuration.",
+    description: "Manages governance controls, integration state, and operational policies.",
     responsibility: "Policy administration · integration oversight",
-    actionLabel: "Launch as Admin",
+    actionLabel: "Enter as Admin",
   },
 ];
 
@@ -48,9 +56,4 @@ export function getSandboxAccountForRole(role: UserRole) {
   return account;
 }
 
-export const SANDBOX_ACCESS_LABEL = "Sandbox role access";
-
-export const LAUNCH_SANDBOX_TITLE = "Launch Operational Sandbox";
-
-export const LAUNCH_SANDBOX_SUBTITLE =
-  "Use preconfigured institutional roles to explore the live Fireblocks-backed settlement workflow.";
+export const SANDBOX_ACCESS_LABEL = "Institutional role access";

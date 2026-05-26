@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { LaunchOperationalSandbox } from "@/components/auth/launch-operational-sandbox";
+import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Card, InputLabel, PrimaryButton, SectionHeader, TextInput } from "@/components/ui/primitives";
+import { ACCESS_PORTAL_SUBTITLE, ACCESS_PORTAL_TITLE } from "@/data/sandbox-roles";
 import { isDemoModeEnabled } from "@/lib/supabase/config";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { fetchUserProfile } from "@/lib/supabase/profiles";
-import { AUTH_ROLE } from "@/lib/supabase/routes";
+import { ACCESS_PORTAL, AUTH_ROLE, OPERATIONS_HOME } from "@/lib/supabase/routes";
 
 export function SignInForm() {
   const router = useRouter();
@@ -19,7 +19,13 @@ export function SignInForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const next = searchParams.get("next") ?? "/";
+  const next = searchParams.get("next") ?? OPERATIONS_HOME;
+
+  useEffect(() => {
+    if (!isSupabaseAuth) {
+      router.replace(ACCESS_PORTAL);
+    }
+  }, [isSupabaseAuth, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,17 +65,15 @@ export function SignInForm() {
   }
 
   if (!isSupabaseAuth) {
-    return (
-      <LaunchOperationalSandbox nextPath={next} />
-    );
+    return null;
   }
 
   return (
     <div className="space-y-4">
       <SectionHeader
-        label="Authentication"
-        title="Institutional sign-in"
-        subtitle="Access the settlement workflow with your organization credentials."
+        label="Institutional credentials"
+        title="Authenticate"
+        subtitle="Sign in with organization credentials, or return to the access portal for sandbox role entry."
       />
 
       <Card variant="elevated">
@@ -103,19 +107,14 @@ export function SignInForm() {
         </form>
       </Card>
 
-      <LaunchOperationalSandbox nextPath={next} compact />
-
       <p className="text-center text-xs text-ops-text-secondary">
-        No account?{" "}
-        <Link href="/auth/sign-up" className="font-medium text-ops-primary hover:underline">
-          Request access
+        <Link href={ACCESS_PORTAL} className="font-medium text-ops-primary hover:underline">
+          ← Return to {ACCESS_PORTAL_TITLE}
         </Link>
       </p>
 
       {isDemoModeEnabled() ? (
-        <p className="text-center text-[10px] text-ops-text-dim">
-          Local environment also supports browser-session sandbox roles without Supabase.
-        </p>
+        <p className="text-center text-[10px] text-ops-text-dim">{ACCESS_PORTAL_SUBTITLE}</p>
       ) : null}
     </div>
   );

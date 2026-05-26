@@ -1,12 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  ACCESS_PORTAL,
   AUTH_ROLE,
   AUTH_SIGN_IN,
   AUTH_SIGN_UP,
   buildSignInUrl,
   isPublicAuthPath,
   isRoleSelectionPath,
+  OPERATIONS_HOME,
   requiresAuth,
   requiresRole,
 } from "@/lib/supabase/routes";
@@ -30,20 +32,36 @@ async function fetchProfileRole(
 export async function updateSupabaseSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
+  const demoRole = request.cookies.get("iwb_role")?.value;
 
   if (isDemoModeEnabled()) {
-    const role = request.nextUrl.searchParams.get("role");
-    if (role && VALID_DEMO_ROLES.has(role)) {
+    const roleParam = request.nextUrl.searchParams.get("role");
+    if (roleParam && VALID_DEMO_ROLES.has(roleParam)) {
       const url = request.nextUrl.clone();
       url.searchParams.delete("role");
       response = NextResponse.redirect(url);
-      response.cookies.set("iwb_role", role, {
+      response.cookies.set("iwb_role", roleParam, {
         path: "/",
         maxAge: 60 * 60 * 24,
         sameSite: "lax",
       });
       return response;
     }
+
+    if (pathname === ACCESS_PORTAL && demoRole && VALID_DEMO_ROLES.has(demoRole)) {
+      const operationsUrl = request.nextUrl.clone();
+      operationsUrl.pathname = OPERATIONS_HOME;
+      operationsUrl.search = "";
+      return NextResponse.redirect(operationsUrl);
+    }
+
+    if (requiresAuth(pathname) && (!demoRole || !VALID_DEMO_ROLES.has(demoRole))) {
+      const portalUrl = request.nextUrl.clone();
+      portalUrl.pathname = ACCESS_PORTAL;
+      portalUrl.search = "";
+      return NextResponse.redirect(portalUrl);
+    }
+
     return response;
   }
 
@@ -77,21 +95,31 @@ export async function updateSupabaseSession(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
+  if (user && pathname === ACCESS_PORTAL) {
+    const role = await fetchProfileRole(supabase, user.id);
+    if (role) {
+      const operationsUrl = request.nextUrl.clone();
+      operationsUrl.pathname = OPERATIONS_HOME;
+      operationsUrl.search = "";
+      return NextResponse.redirect(operationsUrl);
+    }
+  }
+
   if (user && isPublicAuthPath(pathname)) {
     const role = await fetchProfileRole(supabase, user.id);
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.search = "";
-    redirectUrl.pathname = role ? "/" : AUTH_ROLE;
+    redirectUrl.pathname = role ? OPERATIONS_HOME : AUTH_ROLE;
     return NextResponse.redirect(redirectUrl);
   }
 
   if (user && isRoleSelectionPath(pathname)) {
     const role = await fetchProfileRole(supabase, user.id);
     if (role) {
-      const homeUrl = request.nextUrl.clone();
-      homeUrl.pathname = "/";
-      homeUrl.search = "";
-      return NextResponse.redirect(homeUrl);
+      const operationsUrl = request.nextUrl.clone();
+      operationsUrl.pathname = OPERATIONS_HOME;
+      operationsUrl.search = "";
+      return NextResponse.redirect(operationsUrl);
     }
     return response;
   }

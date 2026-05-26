@@ -7,7 +7,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { IntegrationStatusBadge, RoleBadge } from "@/components/ui/badges";
 import { fetchFireblocksStatus } from "@/lib/fireblocks/api-client";
 import { getRoleLabel, isUserRole } from "@/lib/auth/role-labels";
-import { AUTH_SIGN_IN } from "@/lib/supabase/routes";
+import { ACCESS_PORTAL } from "@/lib/supabase/routes";
 import { useAppStore } from "@/lib/store";
 import type { UserRole } from "@/lib/types";
 
@@ -42,7 +42,7 @@ export function AppHeader({ actions, onSignOut }: AppHeaderProps) {
     onSignOut?.();
     clearRole();
     await signOut();
-    router.push(AUTH_SIGN_IN);
+    router.push(ACCESS_PORTAL);
     router.refresh();
   }
 
@@ -89,6 +89,7 @@ export function AppHeader({ actions, onSignOut }: AppHeaderProps) {
                     type="button"
                     onClick={() => {
                       clearRole();
+                      router.push(ACCESS_PORTAL);
                       router.refresh();
                     }}
                     className="inline-flex min-h-10 items-center justify-center rounded-lg border border-ops-border bg-ops-surface px-3.5 py-2 text-xs font-medium text-ops-text-secondary transition hover:text-ops-text"
@@ -99,7 +100,7 @@ export function AppHeader({ actions, onSignOut }: AppHeaderProps) {
               </>
             ) : (
               <Link
-                href={AUTH_SIGN_IN}
+                href={ACCESS_PORTAL}
                 className="inline-flex min-h-10 items-center justify-center rounded-lg border border-ops-border bg-ops-primary px-3.5 py-2 text-xs font-medium text-white transition hover:bg-ops-primary-hover"
               >
                 Authenticate
