@@ -14,7 +14,6 @@ import {
   SANDBOX_FOOTER_NOTE,
   SANDBOX_ROLES,
 } from "@/data/sandbox-roles";
-import { isUserRole } from "@/lib/auth/role-labels";
 import { prepareSandboxSession, resolveSandboxNavigation } from "@/lib/auth/prepare-sandbox-session";
 import { launchSandboxRole } from "@/lib/auth/sandbox-login";
 import { fetchFireblocksStatus } from "@/lib/fireblocks/api-client";
@@ -25,18 +24,12 @@ export function AccessPortal() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedNext = searchParams.get("next");
-  const { user, profile, loading, isSupabaseAuth, isDemoMode, refreshSession } = useAuth();
+  const { loading, isSupabaseAuth, isDemoMode, refreshSession } = useAuth();
   const { effectiveRole, setRole, setActiveBlueprint, setWorkflowStep, sessionReady } = useAppStore();
   const [busyRole, setBusyRole] = useState<UserRole | null>(null);
   const [entering, setEntering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [integrationStatus, setIntegrationStatus] = useState<"connected" | "offline">("offline");
-
-  const activeRole: UserRole | null = isSupabaseAuth
-    ? profile?.role && isUserRole(profile.role)
-      ? profile.role
-      : effectiveRole
-    : effectiveRole;
 
   useEffect(() => {
     void fetchFireblocksStatus()
@@ -53,10 +46,10 @@ export function AccessPortal() {
       return;
     }
 
-    if (activeRole) {
-      router.replace(resolveSandboxNavigation(activeRole, requestedNext));
+    if (effectiveRole) {
+      router.replace(resolveSandboxNavigation(effectiveRole, requestedNext));
     }
-  }, [loading, sessionReady, activeRole, busyRole, entering, requestedNext, router]);
+  }, [loading, sessionReady, effectiveRole, busyRole, entering, requestedNext, router]);
 
   async function handleEnter(role: UserRole) {
     setBusyRole(role);
@@ -92,7 +85,11 @@ export function AccessPortal() {
     }
   }
 
-  if (loading || !sessionReady || entering || (activeRole && !busyRole)) {
+  if (loading || !sessionReady) {
+    return <PageLoadingState label="Loading access portal…" />;
+  }
+
+  if (entering || (effectiveRole && !busyRole)) {
     return <PageLoadingState label="Entering operational workspace…" />;
   }
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { IntegrationStatusBadge, RoleBadge } from "@/components/ui/badges";
+import { exitSandboxSession } from "@/lib/auth/exit-sandbox-session";
 import { fetchFireblocksStatus } from "@/lib/fireblocks/api-client";
 import { getRoleLabel, isUserRole } from "@/lib/auth/role-labels";
 import { ACCESS_PORTAL } from "@/lib/supabase/routes";
@@ -40,10 +41,12 @@ export function AppHeader({ actions, onSignOut }: AppHeaderProps) {
 
   async function handleSignOut() {
     onSignOut?.();
-    clearRole();
-    await signOut();
-    router.push(ACCESS_PORTAL);
-    router.refresh();
+    await exitSandboxSession({
+      clearRole,
+      signOut,
+      router,
+      endSession: true,
+    });
   }
 
   const isAuthenticated = isSupabaseAuth ? Boolean(user) : Boolean(displayRole);
@@ -87,11 +90,7 @@ export function AppHeader({ actions, onSignOut }: AppHeaderProps) {
                 ) : isDemoMode && displayRole ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      clearRole();
-                      router.push(ACCESS_PORTAL);
-                      router.refresh();
-                    }}
+                    onClick={() => void exitSandboxSession({ clearRole, router, endSession: true })}
                     className="inline-flex min-h-10 items-center justify-center rounded-lg border border-ops-border bg-ops-surface px-3.5 py-2 text-xs font-medium text-ops-text-secondary transition hover:text-ops-text"
                   >
                     End session

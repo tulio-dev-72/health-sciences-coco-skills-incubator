@@ -23,8 +23,12 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
     }
   }, [sessionReady, effectiveRole, isLoginPage, router]);
 
-  if (!sessionReady || (!effectiveRole && !isLoginPage)) {
+  if (!sessionReady) {
     return <PageLoadingState label="Loading operational workspace…" />;
+  }
+
+  if (!effectiveRole && !isLoginPage) {
+    return <PageLoadingState label="Returning to access portal…" />;
   }
 
   return (

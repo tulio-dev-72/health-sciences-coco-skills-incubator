@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { RoleBadge, LiveBadge } from "@/components/ui/badges";
-import { ACCESS_PORTAL } from "@/lib/supabase/routes";
+import { useAuth } from "@/components/auth/auth-provider";
+import { exitSandboxSession } from "@/lib/auth/exit-sandbox-session";
 import { getRoleLabel, useAppStore } from "@/lib/store";
 
 const shellMaxWidth = "max-w-lg md:max-w-2xl xl:max-w-4xl";
@@ -14,9 +15,24 @@ export function DemoTopBar({
   title: string;
   subtitle?: string;
 }) {
+  const router = useRouter();
+  const { isSupabaseAuth, signOut } = useAuth();
   const { effectiveRole, sessionReady, clearRole, actorName, state } = useAppStore();
   const displayRole = sessionReady ? effectiveRole : null;
   const displayName = sessionReady ? actorName : "Loading…";
+
+  async function handleSwitchRole() {
+    await exitSandboxSession({ clearRole, router });
+  }
+
+  async function handleEndSession() {
+    await exitSandboxSession({
+      clearRole,
+      signOut: isSupabaseAuth ? signOut : undefined,
+      router,
+      endSession: isSupabaseAuth,
+    });
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-ops-border bg-ops-surface/90 shadow-[var(--ops-shadow-sm)] backdrop-blur-md">
@@ -39,20 +55,20 @@ export function DemoTopBar({
           {displayRole ? <RoleBadge role={displayRole} /> : null}
           <p className="text-[10px] text-ops-text-dim">{displayName}</p>
           <div className="flex gap-3 sm:flex-col sm:gap-1">
-            <Link
-              href={ACCESS_PORTAL}
-              onClick={clearRole}
+            <button
+              type="button"
+              onClick={() => void handleSwitchRole()}
               className="inline-flex min-h-11 items-center text-[11px] font-medium text-ops-text-secondary hover:text-ops-primary"
             >
               Switch role
-            </Link>
-            <Link
-              href={ACCESS_PORTAL}
-              onClick={clearRole}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleEndSession()}
               className="inline-flex min-h-11 items-center text-[11px] text-ops-text-dim hover:text-ops-text-secondary"
             >
               End session
-            </Link>
+            </button>
           </div>
         </div>
       </div>

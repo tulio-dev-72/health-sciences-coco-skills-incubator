@@ -97,10 +97,12 @@ export async function updateSupabaseSession(request: NextRequest) {
   }
 
   if (user && pathname === ACCESS_PORTAL) {
-    const role = await fetchProfileRole(supabase, user.id);
-    if (role && VALID_DEMO_ROLES.has(role)) {
+    const sandboxRole = request.cookies.get("iwb_role")?.value;
+    if (sandboxRole && VALID_DEMO_ROLES.has(sandboxRole)) {
       const operationsUrl = request.nextUrl.clone();
-      operationsUrl.pathname = getRoleDestination(role as "analyst" | "treasury_manager" | "admin");
+      operationsUrl.pathname = getRoleDestination(
+        sandboxRole as "analyst" | "treasury_manager" | "admin",
+      );
       operationsUrl.search = "";
       return NextResponse.redirect(operationsUrl);
     }
