@@ -1,11 +1,11 @@
 "use client";
 
-import { PRIMARY_SETTLEMENT } from "@/data/primary-scenario";
 import {
   fetchFireblocksStatus,
   fetchFireblocksTreasuryState,
   submitFireblocksTransfer,
 } from "@/lib/fireblocks/api-client";
+import { isDemoModeEnabled } from "@/lib/supabase/config";
 import {
   FireblocksSubmitError,
   buildTransactionDebugInfo,
@@ -38,8 +38,17 @@ export async function submitAuthorizedFireblocksTransfer(
   const offlineDebug = buildTransactionDebugInfo({ transfer, treasury: null });
 
   if (integration.integrationStatus !== "connected") {
+    if (!isDemoModeEnabled()) {
+      throw new FireblocksSubmitError({
+        message:
+          "Fireblocks is not connected. Configure sandbox credentials or enable Demo Mode for simulated lifecycle.",
+        category: "integration_offline",
+        debug: offlineDebug,
+      });
+    }
+
     return {
-      fireblocksTxId: PRIMARY_SETTLEMENT.demoFireblocksTxId,
+      fireblocksTxId: "",
       fireblocksStatus: "SUBMITTED",
       demoMode: true,
       debug: offlineDebug,

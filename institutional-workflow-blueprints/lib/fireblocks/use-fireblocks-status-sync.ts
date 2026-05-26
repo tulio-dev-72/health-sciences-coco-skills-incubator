@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { fetchFireblocksTransferStatus } from "@/lib/fireblocks/api-client";
+import { isRealFireblocksTxId } from "@/lib/fireblocks/lifecycle";
 import { useAppStore } from "@/lib/store";
 
 const TERMINAL_STATUSES = new Set(["COMPLETED", "FAILED", "REJECTED", "CANCELLED", "BLOCKED"]);
@@ -10,12 +11,10 @@ export function useFireblocksStatusSync() {
   const { state, syncFireblocksTransferStatus } = useAppStore();
 
   useEffect(() => {
-    if (!state.fireblocksEnabled) {
-      return;
-    }
-
     const tracked = state.transfers.filter(
-      (transfer) => transfer.fireblocksTxId || transfer.status === "SETTLED",
+      (transfer) =>
+        isRealFireblocksTxId(transfer.fireblocksTxId) &&
+        (!transfer.fireblocksStatus || !TERMINAL_STATUSES.has(transfer.fireblocksStatus)),
     );
 
     if (tracked.length === 0) {
@@ -45,6 +44,7 @@ export function useFireblocksStatusSync() {
             fireblocksTxId: status.fireblocksTxId,
             status: status.status,
             subStatus: status.subStatus,
+            statusSource: "fireblocks_api",
           });
         } catch {
           // Ignore missing records until submit/webhook arrives.
@@ -59,5 +59,5 @@ export function useFireblocksStatusSync() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [state.fireblocksEnabled, state.transfers, syncFireblocksTransferStatus]);
+  }, [state.transfers, syncFireblocksTransferStatus]);
 }

@@ -1,4 +1,67 @@
+import { PRIMARY_SETTLEMENT } from "@/data/primary-scenario";
 import type { TransferStatus } from "@/lib/types";
+
+export type SettlementLifecycleMode = "live" | "simulated";
+
+export type SettlementStatusSource = "webhook" | "fireblocks_api" | "demo_simulation";
+
+export function isRealFireblocksTxId(txId: string | null | undefined): boolean {
+  const id = txId?.trim();
+  if (!id) {
+    return false;
+  }
+  return id !== PRIMARY_SETTLEMENT.demoFireblocksTxId;
+}
+
+export function getSettlementLifecycleMode(input: {
+  fireblocksTxId?: string | null;
+  demoFallback?: boolean;
+}): SettlementLifecycleMode {
+  if (isRealFireblocksTxId(input.fireblocksTxId)) {
+    return "live";
+  }
+  if (input.demoFallback) {
+    return "simulated";
+  }
+  return "live";
+}
+
+export function getStatusSourceLabel(source: SettlementStatusSource): string {
+  switch (source) {
+    case "webhook":
+      return "Webhook";
+    case "fireblocks_api":
+      return "Fireblocks API polling";
+    case "demo_simulation":
+      return "Demo simulation";
+  }
+}
+
+export function appendUniqueFireblocksStatus(statuses: string[], status: string): string[] {
+  const normalized = normalizeFireblocksStatus(status);
+  if (!normalized) {
+    return statuses;
+  }
+
+  const last = statuses[statuses.length - 1];
+  if (last && normalizeFireblocksStatus(last) === normalized) {
+    return statuses;
+  }
+
+  return [...statuses, normalized];
+}
+
+export function auditActorForStatusSource(source?: SettlementStatusSource): string {
+  switch (source) {
+    case "fireblocks_api":
+      return "Fireblocks API";
+    case "demo_simulation":
+      return "Demo simulation";
+    case "webhook":
+    default:
+      return "Fireblocks Webhook";
+  }
+}
 
 const TERMINAL_FIREBLOCKS = new Set(["COMPLETED", "FAILED", "REJECTED", "CANCELLED", "BLOCKED"]);
 

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AUDIT_ACTIONS } from "@/lib/audit";
 import { formatCurrency } from "@/lib/format";
-import { mapFireblocksToSettlementLifecycle } from "@/lib/fireblocks/lifecycle";
+import { mapFireblocksToSettlementLifecycle, auditActorForStatusSource, type SettlementStatusSource } from "@/lib/fireblocks/lifecycle";
 import { evaluateTransferPolicy } from "@/lib/policy";
 import { fetchUserProfile } from "@/lib/supabase/profiles";
 import {
@@ -333,6 +333,7 @@ export async function updateSettlementFireblocksStatus(
     subStatus?: string | null;
     eventType?: string;
     payload?: Record<string, unknown>;
+    statusSource?: SettlementStatusSource;
   },
 ): Promise<Transfer | null> {
   let settlement: SettlementRow | null = null;
@@ -357,6 +358,12 @@ export async function updateSettlementFireblocksStatus(
   const lifecycle = mapFireblocksToSettlementLifecycle(input.status, settlement.status);
   const completed = lifecycle.fireblocksStatus === "COMPLETED";
   const previousStatus = settlement.fireblocks_status;
+
+  if (previousStatus === lifecycle.fireblocksStatus) {
+    return mapSettlementRow(settlement);
+  }
+
+  const auditActor = auditActorForStatusSource(input.statusSource);
   const now = new Date().toISOString();
 
   const { data, error } = await supabase
@@ -391,7 +398,7 @@ export async function updateSettlementFireblocksStatus(
   await insertAuditLog(supabase, {
     settlementRequestId: settlement.id,
     action: AUDIT_ACTIONS.webhookStatusUpdated,
-    actor: "Fireblocks Webhook",
+    actor: auditActor,
     role: "admin",
     details: `${lifecycle.fireblocksStatus}${completed ? " — settlement completed" : ""}`,
     createdAt: now,
@@ -401,7 +408,7 @@ export async function updateSettlementFireblocksStatus(
     await insertAuditLog(supabase, {
       settlementRequestId: settlement.id,
       action: AUDIT_ACTIONS.settlementCompleted,
-      actor: "Fireblocks Webhook",
+      actor: auditActor,
       role: "admin",
       details: `${formatCurrency(Number(settlement.amount), settlement.asset)} settlement completed on ${settlement.settlement_rail ?? "Ethereum"}.`,
       createdAt: now,

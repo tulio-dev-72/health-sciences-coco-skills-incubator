@@ -20,7 +20,7 @@ import {
   SectionHeader,
   TextInput,
 } from "@/components/ui/primitives";
-import { PRIMARY_BLUEPRINT_ID, PRIMARY_SETTLEMENT, WEBHOOK_LIFECYCLE_STATUSES } from "@/data/primary-scenario";
+import { PRIMARY_BLUEPRINT_ID, PRIMARY_SETTLEMENT } from "@/data/primary-scenario";
 import { FireblocksSettlementInfrastructure } from "@/components/demo/fireblocks-settlement-infrastructure";
 import { MpcCustodyBoundaryPanel } from "@/components/demo/mpc-custody-boundary-panel";
 import { submitAuthorizedFireblocksTransfer } from "@/lib/fireblocks/authorize-transfer";
@@ -29,11 +29,7 @@ import {
   SETTLEMENT_RAIL_SEPOLIA,
 } from "@/lib/fireblocks/constants";
 import { useFireblocksTreasury } from "@/lib/fireblocks/use-fireblocks-treasury";
-import {
-  simulateFireblocksWebhookEvent,
-  useWebhookLifecycleSync,
-} from "@/lib/fireblocks/use-webhook-lifecycle-sync";
-import { isSupabasePersistenceEnabled } from "@/lib/supabase/persistence";
+import { useSettlementLifecycleSync } from "@/lib/fireblocks/use-settlement-lifecycle-sync";
 import { formatCurrency } from "@/lib/format";
 import { canApproveTransfers } from "@/lib/policy";
 import { getRoleLabel, useAppStore } from "@/lib/store";
@@ -54,7 +50,6 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
     createTransfer,
     approveTransfer,
     rejectTransfer,
-    syncFireblocksTransferStatus,
   } = useAppStore();
 
   const [step, setStep] = useState<InlineStep>("create");
@@ -65,31 +60,31 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [phase, setPhase] = useState<SettlementPhase>("idle");
   const [activeTransferId, setActiveTransferId] = useState<string | null>(null);
-  const [webhookStatuses, setWebhookStatuses] = useState<string[]>([]);
+  const [demoFallback, setDemoFallback] = useState(false);
+  const [authorizedTxId, setAuthorizedTxId] = useState<string | null>(null);
 
   function goToStep(next: InlineStep) {
     setStep(next);
     setWorkflowStep(next);
   }
 
+  const activeTransfer = state.transfers.find((item) => item.id === activeTransferId);
   const lifecycleExternalId = activeTransferId ?? state.lastTransferId;
-  const { webhookStatuses: liveWebhookStatuses } = useWebhookLifecycleSync({
+  const lifecycle = useSettlementLifecycleSync({
     externalId: lifecycleExternalId,
+    fireblocksTxId: authorizedTxId ?? activeTransfer?.fireblocksTxId,
+    demoFallback,
     enabled: phase === "webhook" && Boolean(lifecycleExternalId),
     onComplete: () => {
       goToStep("audit");
     },
   });
 
-  const displayedWebhookStatuses =
-    liveWebhookStatuses.length > 0 ? liveWebhookStatuses : webhookStatuses;
-
   const treasury = useFireblocksTreasury();
   const settlement = PRIMARY_SETTLEMENT;
   const transfer = state.transfers.find((item) => item.id === state.lastTransferId);
   const pending = state.transfers.filter((item) => item.status === "PENDING_APPROVAL");
   const canApprove = canApproveTransfers(effectiveRole);
-  const activeTransfer = state.transfers.find((item) => item.id === activeTransferId);
   const displayRole = sessionReady ? effectiveRole : null;
   const connected =
     treasury.state.integrationStatus === "connected" && Boolean(treasury.state.vault);
@@ -139,60 +134,39 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
     setSubmitting(false);
   }
 
-  async function simulateWebhookLifecycle(transferId: string, fireblocksTxId: string) {
-    setPhase("webhook");
-    goToStep("webhook");
-    setWebhookStatuses([]);
-
-    for (const status of WEBHOOK_LIFECYCLE_STATUSES) {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      if (isSupabasePersistenceEnabled()) {
-        await simulateFireblocksWebhookEvent({
-          externalTxId: transferId,
-          fireblocksTxId,
-          status,
-        });
-      } else {
-        setWebhookStatuses((current) => [...current, status]);
-        await syncFireblocksTransferStatus({
-          externalTxId: transferId,
-          fireblocksTxId,
-          status,
-        });
-      }
-    }
-
-    if (!isSupabasePersistenceEnabled()) {
-      goToStep("audit");
-    }
-  }
-
   async function handleAuthorize(transferId: string) {
     setAuthError(null);
     setBusyId(transferId);
     setActiveTransferId(transferId);
     setPhase("creating");
+    setDemoFallback(false);
+    setAuthorizedTxId(null);
     goToStep("custody");
 
     const pendingTransfer = state.transfers.find((item) => item.id === transferId);
     if (!pendingTransfer) return;
 
     try {
-      const { fireblocksTxId, fireblocksStatus } = await submitAuthorizedFireblocksTransfer(
-        pendingTransfer,
-      );
+      const result = await submitAuthorizedFireblocksTransfer(pendingTransfer);
 
-      await new Promise((resolve) => setTimeout(resolve, 1400));
+      if (result.demoMode) {
+        await new Promise((resolve) => setTimeout(resolve, 1400));
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
+
       setPhase("created");
       goToStep("custody");
       await approveTransfer(transferId, {
-        fireblocksTxId,
-        fireblocksStatus,
+        fireblocksTxId: result.fireblocksTxId || undefined,
+        fireblocksStatus: result.fireblocksStatus,
       });
 
+      setAuthorizedTxId(result.fireblocksTxId || null);
+      setDemoFallback(result.demoMode);
       await new Promise((resolve) => setTimeout(resolve, 800));
-      await simulateWebhookLifecycle(transferId, fireblocksTxId);
+      setPhase("webhook");
+      goToStep("webhook");
     } catch (authorizeError) {
       setPhase("idle");
       setAuthError(
@@ -399,13 +373,11 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
 
           {phase !== "idle" && activeTransfer ? (
             <FireblocksSettlementPanel
-              transfer={{
-                ...activeTransfer,
-                fireblocksTxId:
-                  activeTransfer.fireblocksTxId ?? PRIMARY_SETTLEMENT.demoFireblocksTxId,
-              }}
+              transfer={activeTransfer}
               phase={phase === "webhook" ? "webhook" : phase}
-              webhookStatuses={displayedWebhookStatuses}
+              webhookStatuses={lifecycle.webhookStatuses}
+              lifecycleMode={lifecycle.mode}
+              statusSource={lifecycle.statusSource}
             />
           ) : (
             <>
@@ -487,17 +459,15 @@ export function PrimarySettlementWorkflow({ onBack }: { onBack: () => void }) {
           <Card variant="elevated">
             <AuditTimeline events={state.auditLog} />
           </Card>
-          {transfer?.fireblocksTxId ? (
+          {transfer?.fireblocksTxId || transfer?.fireblocksStatus ? (
             <FireblocksSettlementPanel
               transfer={transfer}
               phase="webhook"
               webhookStatuses={
-                transfer.fireblocksStatus === "COMPLETED"
-                  ? [...WEBHOOK_LIFECYCLE_STATUSES]
-                  : displayedWebhookStatuses.length > 0
-                    ? displayedWebhookStatuses
-                    : ["PENDING_SIGNATURE", "CONFIRMING", "COMPLETED"]
+                transfer.fireblocksStatus ? [transfer.fireblocksStatus] : lifecycle.webhookStatuses
               }
+              lifecycleMode={lifecycle.mode}
+              statusSource={lifecycle.statusSource}
             />
           ) : null}
         </div>

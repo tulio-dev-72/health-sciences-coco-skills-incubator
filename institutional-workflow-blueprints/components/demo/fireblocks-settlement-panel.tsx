@@ -5,14 +5,18 @@ import { Card, SectionHeader } from "@/components/ui/primitives";
 import { FireblocksStatusBadge } from "@/components/ui/badges";
 import {
   WEBHOOK_LIFECYCLE_STEPS,
-  getWebhookLifecycleStepIndex,
+  getStatusSourceLabel,
   normalizeFireblocksStatus,
+  type SettlementLifecycleMode,
+  type SettlementStatusSource,
 } from "@/lib/fireblocks/lifecycle";
 
 type FireblocksSettlementPanelProps = {
   transfer: Transfer;
   phase: "creating" | "created" | "webhook";
   webhookStatuses: string[];
+  lifecycleMode?: SettlementLifecycleMode;
+  statusSource?: SettlementStatusSource | null;
 };
 
 type StepVisualState = "pending" | "active" | "complete";
@@ -25,25 +29,48 @@ function resolveStepState(
     return "pending";
   }
 
-  const stepIndex = getWebhookLifecycleStepIndex(stepStatus);
-  const highestIndex = webhookStatuses.reduce(
-    (max, status) => Math.max(max, getWebhookLifecycleStepIndex(status)),
-    -1,
+  const normalizedStep = normalizeFireblocksStatus(stepStatus);
+  const normalizedReceived = webhookStatuses.map(normalizeFireblocksStatus);
+  const latest = normalizedReceived[normalizedReceived.length - 1];
+  const stepIndex = normalizedReceived.indexOf(normalizedStep);
+
+  if (stepIndex === -1) {
+    return "pending";
+  }
+
+  if (normalizedStep === latest) {
+    return normalizedStep === "COMPLETED" ? "complete" : "active";
+  }
+
+  return "complete";
+}
+
+function LifecycleModeBanner({
+  lifecycleMode,
+  statusSource,
+}: {
+  lifecycleMode: SettlementLifecycleMode;
+  statusSource: SettlementStatusSource | null;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-ops-border bg-ops-surface px-3 py-2.5">
+      <span
+        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+          lifecycleMode === "live"
+            ? "bg-ops-success-muted text-ops-success ring-1 ring-ops-success/30"
+            : "bg-ops-warning-muted text-ops-warning ring-1 ring-ops-warning/30"
+        }`}
+      >
+        {lifecycleMode === "live" ? "Live Fireblocks lifecycle" : "Simulated lifecycle"}
+      </span>
+      {statusSource ? (
+        <span className="text-[11px] font-medium text-ops-text-secondary">
+          Status source:{" "}
+          <span className="text-ops-text">{getStatusSourceLabel(statusSource)}</span>
+        </span>
+      ) : null}
+    </div>
   );
-
-  if (stepIndex < highestIndex) {
-    return "complete";
-  }
-
-  if (stepIndex === highestIndex) {
-    const current = normalizeFireblocksStatus(webhookStatuses[webhookStatuses.length - 1] ?? "");
-    if (current === "COMPLETED" && stepStatus === "COMPLETED") {
-      return "complete";
-    }
-    return "active";
-  }
-
-  return "pending";
 }
 
 function WebhookLifecycleStepper({ webhookStatuses }: { webhookStatuses: string[] }) {
@@ -106,7 +133,9 @@ function WebhookLifecycleStepper({ webhookStatuses }: { webhookStatuses: string[
               </p>
               {visual === "active" ? (
                 <p className="mt-2 text-[10px] font-medium text-ops-info">
-                  Event received — processing…
+                  {normalizeFireblocksStatus(step.status) === "COMPLETED"
+                    ? "Settlement confirmed on custody rail."
+                    : "Awaiting Fireblocks status update…"}
                 </p>
               ) : null}
             </div>
@@ -121,6 +150,8 @@ export function FireblocksSettlementPanel({
   transfer,
   phase,
   webhookStatuses,
+  lifecycleMode = "live",
+  statusSource = null,
 }: FireblocksSettlementPanelProps) {
   if (phase === "creating") {
     return (
@@ -171,9 +202,14 @@ export function FireblocksSettlementPanel({
         <Card variant="elevated">
           <SectionHeader
             label="Event-driven lifecycle"
-            title="Webhook settlement progression"
-            subtitle="Fireblocks webhook events drive custody status — each transition updates the operational audit trail."
+            title="Settlement progression"
+            subtitle={
+              lifecycleMode === "live"
+                ? "Status updates from Fireblocks webhooks and API polling — COMPLETED only when custody confirms."
+                : "Demo Mode fallback — simulated custody progression without a live Fireblocks transaction."
+            }
           />
+          <LifecycleModeBanner lifecycleMode={lifecycleMode} statusSource={statusSource} />
           <WebhookLifecycleStepper webhookStatuses={webhookStatuses} />
         </Card>
       ) : null}

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { SettlementStatusSource } from "@/lib/fireblocks/lifecycle";
 import { createSupabaseAdminClientIfConfigured } from "@/lib/supabase/admin";
 import { requireWorkflowUser } from "@/lib/supabase/workflow/auth";
 import { updateSettlementFireblocksStatus } from "@/lib/supabase/workflow/service";
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
       subStatus?: string | null;
       eventType?: string;
       payload?: Record<string, unknown>;
+      statusSource?: SettlementStatusSource;
     };
 
     const admin = createSupabaseAdminClientIfConfigured();

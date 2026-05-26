@@ -9,6 +9,7 @@ export type FireblocksTransactionFailureCategory =
   | "invalid_vault"
   | "invalid_amount"
   | "duplicate_external_tx_id"
+  | "integration_offline"
   | "credentials"
   | "unknown";
 

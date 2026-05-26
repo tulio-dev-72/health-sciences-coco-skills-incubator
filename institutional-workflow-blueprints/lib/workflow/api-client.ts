@@ -64,6 +64,7 @@ export async function apiUpdateFireblocksStatus(input: {
   status: string;
   subStatus?: string | null;
   eventType?: string;
+  statusSource?: "webhook" | "fireblocks_api" | "demo_simulation";
 }): Promise<Transfer | null> {
   const response = await fetch("/api/workflow/fireblocks-status", {
     method: "POST",

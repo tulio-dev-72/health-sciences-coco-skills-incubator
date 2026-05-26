@@ -25,12 +25,15 @@ import {
 import { formatCurrency } from "@/lib/format";
 import { evaluateTransferPolicy, normalizeAddress } from "@/lib/policy";
 import { AUDIT_ACTIONS } from "@/lib/audit";
-import { getFireblocksStatusLabel } from "@/lib/fireblocks/lifecycle";
+import {
+  auditActorForStatusSource,
+  getFireblocksStatusLabel,
+  type SettlementStatusSource,
+} from "@/lib/fireblocks/lifecycle";
 import { dedupeTransfersById } from "@/lib/fireblocks/transaction-validation";
 import {
   isPrimaryBlueprint,
   PRIMARY_DEMO_TIMES,
-  PRIMARY_SETTLEMENT,
 } from "@/data/primary-scenario";
 import { isSupabasePersistenceEnabled } from "@/lib/supabase/persistence";
 import type { WorkflowSnapshot } from "@/lib/supabase/workflow/mappers";
@@ -92,6 +95,7 @@ type AppAction =
       fireblocksTxId?: string;
       status: string;
       subStatus?: string | null;
+      statusSource?: SettlementStatusSource;
     }
   | { type: "UPDATE_POLICY"; policy: Partial<PolicySettings>; actor: string; role: UserRole }
   | { type: "ADD_WHITELIST"; address: string; actor: string; role: UserRole }
@@ -371,12 +375,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         return state;
       }
 
-      const fireblocksTxId =
-        action.fireblocksTxId ??
-        transfer.fireblocksTxId ??
-        (isPrimaryBlueprint(state.activeBlueprint)
-          ? PRIMARY_SETTLEMENT.demoFireblocksTxId
-          : undefined);
+      const fireblocksTxId = action.fireblocksTxId ?? transfer.fireblocksTxId;
 
       const approved: Transfer = {
         ...transfer,
@@ -470,33 +469,41 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
 
       const previousStatus = transfer.fireblocksStatus;
-      const completed = action.status === "COMPLETED";
+      const normalizedStatus = action.status.trim().toUpperCase();
+      if (previousStatus === normalizedStatus) {
+        return state;
+      }
+
+      const completed = normalizedStatus === "COMPLETED";
+      const auditActor = auditActorForStatusSource(action.statusSource);
+      const useDemoTimestamps = action.statusSource === "demo_simulation";
       const nextTransfer: Transfer = {
         ...transfer,
         fireblocksTxId: action.fireblocksTxId ?? transfer.fireblocksTxId,
-        fireblocksStatus: action.status,
+        fireblocksStatus: normalizedStatus,
         status: completed ? "SETTLED" : transfer.status,
         updatedAt: new Date().toISOString(),
       };
 
-      const webhookTimestamp =
-        action.status === "PENDING_SIGNATURE"
+      const webhookTimestamp = useDemoTimestamps
+        ? normalizedStatus === "PENDING_SIGNATURE"
           ? primaryTimestamp(state, "webhookPending")
-          : action.status === "CONFIRMING"
+          : normalizedStatus === "CONFIRMING"
             ? primaryTimestamp(state, "webhookConfirming")
-            : action.status === "COMPLETED"
+            : normalizedStatus === "COMPLETED"
               ? primaryTimestamp(state, "completed")
-              : undefined;
+              : undefined
+        : undefined;
 
       let auditLog = appendAudit(
         state.auditLog,
         {
           action: AUDIT_ACTIONS.webhookStatusUpdated,
-          actor: "Fireblocks Webhook",
+          actor: auditActor,
           role: "admin",
           details: completed
-            ? `${getFireblocksStatusLabel(action.status)} — institutional settlement finalized and recorded in audit trail.`
-            : `${getFireblocksStatusLabel(action.status)} — webhook event received from Fireblocks infrastructure.`,
+            ? `${getFireblocksStatusLabel(normalizedStatus)} — institutional settlement finalized and recorded in audit trail.`
+            : `${getFireblocksStatusLabel(normalizedStatus)} — lifecycle update from ${auditActor}.`,
         },
         webhookTimestamp,
       );
@@ -506,11 +513,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
           auditLog,
           {
             action: AUDIT_ACTIONS.settlementCompleted,
-            actor: "Fireblocks Webhook",
+            actor: auditActor,
             role: "admin",
             details: `${formatCurrency(transfer.amount, transfer.asset)} settlement completed on ${transfer.settlementRail ?? "Ethereum"}.`,
           },
-          primaryTimestamp(state, "completed"),
+          useDemoTimestamps ? primaryTimestamp(state, "completed") : undefined,
         );
       }
 
@@ -602,6 +609,7 @@ type AppContextValue = {
     fireblocksTxId?: string;
     status: string;
     subStatus?: string | null;
+    statusSource?: SettlementStatusSource;
   }) => Promise<void>;
   createTransfer: (
     input: CreateTransferInput,
@@ -609,7 +617,7 @@ type AppContextValue = {
   ) => Promise<CreateTransferResult>;
   approveTransfer: (
     transferId: string,
-    fireblocks?: { fireblocksTxId: string; fireblocksStatus: string },
+    fireblocks?: { fireblocksTxId?: string; fireblocksStatus: string },
   ) => Promise<boolean>;
   rejectTransfer: (transferId: string) => Promise<boolean>;
   updatePolicy: (policy: Partial<PolicySettings>) => Promise<void>;

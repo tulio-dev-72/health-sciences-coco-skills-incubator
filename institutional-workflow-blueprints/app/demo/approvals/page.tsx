@@ -9,12 +9,12 @@ import { ConnectedWorkflowStepper } from "@/components/demo/connected-workflow-s
 import { FireblocksSettlementPanel } from "@/components/demo/fireblocks-settlement-panel";
 import { SettlementReviewCard } from "@/components/demo/settlement-review-card";
 import { Card, DangerButton, PrimaryButton, SecondaryButton, SectionHeader } from "@/components/ui/primitives";
-import { PRIMARY_SETTLEMENT, WEBHOOK_LIFECYCLE_STATUSES } from "@/data/primary-scenario";
 import {
   submitAuthorizedFireblocksTransfer,
   toAuthorizationFailure,
   type AuthorizedFireblocksTransferFailure,
 } from "@/lib/fireblocks/authorize-transfer";
+import { useSettlementLifecycleSync } from "@/lib/fireblocks/use-settlement-lifecycle-sync";
 import {
   buildTransactionDebugInfo,
   dedupePendingTransfers,
@@ -47,7 +47,6 @@ export default function ApprovalsPage() {
     effectiveRole,
     approveTransfer,
     rejectTransfer,
-    syncFireblocksTransferStatus,
     setWorkflowStep,
   } = useAppStore();
   const [error, setError] = useState<string | null>(null);
@@ -57,8 +56,20 @@ export default function ApprovalsPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [phase, setPhase] = useState<SettlementPhase>("idle");
   const [activeTransferId, setActiveTransferId] = useState<string | null>(null);
-  const [webhookStatuses, setWebhookStatuses] = useState<string[]>([]);
+  const [demoFallback, setDemoFallback] = useState(false);
+  const [authorizedTxId, setAuthorizedTxId] = useState<string | null>(null);
   const authorizingRef = useRef(false);
+
+  const lifecycle = useSettlementLifecycleSync({
+    externalId: activeTransferId,
+    fireblocksTxId: authorizedTxId,
+    demoFallback,
+    enabled: phase === "webhook" && Boolean(activeTransferId),
+    onComplete: () => {
+      setWorkflowStep("audit");
+      setTimeout(() => router.push("/demo/audit"), 800);
+    },
+  });
 
   const pending = useMemo(
     () => dedupePendingTransfers(state.transfers),
@@ -73,25 +84,6 @@ export default function ApprovalsPage() {
   const visibleDebug = debugInfo ?? failure?.debug ?? previewDebug;
   const exactError = formatExactFireblocksError(failure) ?? error;
 
-  async function simulateWebhookLifecycle(transferId: string, fireblocksTxId: string) {
-    setPhase("webhook");
-    setWorkflowStep("webhook");
-    setWebhookStatuses([]);
-
-    for (const status of WEBHOOK_LIFECYCLE_STATUSES) {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      setWebhookStatuses((current) => [...current, status]);
-      await syncFireblocksTransferStatus({
-        externalTxId: transferId,
-        fireblocksTxId,
-        status,
-      });
-    }
-
-    setWorkflowStep("audit");
-    setTimeout(() => router.push("/demo/audit"), 800);
-  }
-
   async function handleAuthorize(transferId: string) {
     if (authorizingRef.current || busyId !== null) {
       return;
@@ -104,6 +96,8 @@ export default function ApprovalsPage() {
     setActiveTransferId(transferId);
     setPhase("creating");
     setWorkflowStep("custody");
+    setDemoFallback(false);
+    setAuthorizedTxId(null);
 
     const transfer = state.transfers.find((item) => item.id === transferId);
     if (!transfer) {
@@ -125,7 +119,7 @@ export default function ApprovalsPage() {
 
       setPhase("created");
       const approved = await approveTransfer(transferId, {
-        fireblocksTxId: result.fireblocksTxId,
+        fireblocksTxId: result.fireblocksTxId || undefined,
         fireblocksStatus: result.fireblocksStatus,
       });
 
@@ -133,8 +127,11 @@ export default function ApprovalsPage() {
         throw new Error("Authorization state could not be saved. Settlement remains pending.");
       }
 
+      setAuthorizedTxId(result.fireblocksTxId || null);
+      setDemoFallback(result.demoMode);
       await new Promise((resolve) => setTimeout(resolve, 800));
-      await simulateWebhookLifecycle(transferId, result.fireblocksTxId);
+      setPhase("webhook");
+      setWorkflowStep("webhook");
     } catch (authorizeError) {
       const failureDetails = toAuthorizationFailure(authorizeError, transfer);
       setPhase("idle");
@@ -207,13 +204,11 @@ export default function ApprovalsPage() {
 
         {phase !== "idle" && activeTransfer ? (
           <FireblocksSettlementPanel
-            transfer={{
-              ...activeTransfer,
-              fireblocksTxId:
-                activeTransfer.fireblocksTxId ?? PRIMARY_SETTLEMENT.demoFireblocksTxId,
-            }}
+            transfer={activeTransfer}
             phase={phase === "webhook" ? "webhook" : phase}
-            webhookStatuses={webhookStatuses}
+            webhookStatuses={lifecycle.webhookStatuses}
+            lifecycleMode={lifecycle.mode}
+            statusSource={lifecycle.statusSource}
           />
         ) : (
           <>

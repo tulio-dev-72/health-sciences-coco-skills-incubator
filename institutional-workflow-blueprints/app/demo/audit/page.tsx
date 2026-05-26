@@ -6,11 +6,36 @@ import { FireblocksSettlementPanel } from "@/components/demo/fireblocks-settleme
 import { ConnectedWorkflowStepper } from "@/components/demo/connected-workflow-stepper";
 import { Card, SectionHeader } from "@/components/ui/primitives";
 import { APP_TERMS } from "@/data/infrastructure-mapping";
+import { AUDIT_ACTIONS } from "@/lib/audit";
+import {
+  getSettlementLifecycleMode,
+  type SettlementStatusSource,
+} from "@/lib/fireblocks/lifecycle";
 import { useAppStore } from "@/lib/store";
 
 export default function AuditPage() {
   const { state } = useAppStore();
   const lastTransfer = state.transfers.find((item) => item.id === state.lastTransferId);
+
+  const lifecycleEvents = state.auditLog.filter(
+    (event) =>
+      event.action === AUDIT_ACTIONS.webhookStatusUpdated ||
+      event.action === AUDIT_ACTIONS.settlementCompleted,
+  );
+  const lastLifecycleActor = lifecycleEvents[lifecycleEvents.length - 1]?.actor;
+  const statusSource: SettlementStatusSource | null =
+    lastLifecycleActor === "Fireblocks API"
+      ? "fireblocks_api"
+      : lastLifecycleActor === "Demo simulation"
+        ? "demo_simulation"
+        : lastLifecycleActor === "Fireblocks Webhook"
+          ? "webhook"
+          : null;
+  const lifecycleMode = getSettlementLifecycleMode({
+    fireblocksTxId: lastTransfer?.fireblocksTxId,
+    demoFallback: statusSource === "demo_simulation",
+  });
+  const webhookStatuses = lastTransfer?.fireblocksStatus ? [lastTransfer.fireblocksStatus] : [];
 
   return (
     <>
@@ -52,15 +77,13 @@ export default function AuditPage() {
           </Card>
         )}
 
-        {lastTransfer?.fireblocksTxId && lastTransfer.fireblocksStatus ? (
+        {lastTransfer?.fireblocksStatus ? (
           <FireblocksSettlementPanel
             transfer={lastTransfer}
             phase="webhook"
-            webhookStatuses={
-              lastTransfer.fireblocksStatus === "COMPLETED"
-                ? ["PENDING_SIGNATURE", "CONFIRMING", "COMPLETED"]
-                : [lastTransfer.fireblocksStatus]
-            }
+            webhookStatuses={webhookStatuses}
+            lifecycleMode={lifecycleMode}
+            statusSource={statusSource}
           />
         ) : null}
       </main>
