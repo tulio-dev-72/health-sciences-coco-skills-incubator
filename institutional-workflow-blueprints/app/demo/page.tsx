@@ -5,6 +5,7 @@ import { DemoTopBar } from "@/components/demo/top-bar";
 import { DemoGuideCard, UseCaseContextCard } from "@/components/demo/demo-guide-card";
 import { InfrastructureMappingCard } from "@/components/demo/infrastructure-mapping-card";
 import { OpsCommandCard } from "@/components/demo/ops-command-card";
+import { OperationalReportingSection } from "@/components/demo/operational-reporting-section";
 import { PoweredByFireblocksCard } from "@/components/demo/powered-by-fireblocks-card";
 import { TreasuryMainVaultCard } from "@/components/demo/treasury-main-vault-card";
 import { TransferCard } from "@/components/demo/transfer-card";
@@ -36,6 +37,7 @@ export default function DemoDashboardPage() {
 
       <main className="ops-page">
         <OpsCommandCard />
+        <OperationalReportingSection />
         <UseCaseContextCard />
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
